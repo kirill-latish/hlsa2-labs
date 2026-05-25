@@ -1,0 +1,18 @@
+{
+  "baseline": {
+    "rate_rps": 200,
+    "duration_s": 180,
+    "warmup_s": 30,
+    "concurrency_ceiling": 256
+  },
+  "overload": {
+    "ramp": [
+      {"rate_rps": 200, "duration_s": 30},
+      {"rate_rps": 400, "duration_s": 30},
+      {"rate_rps": 800, "duration_s": 60},
+      {"rate_rps": 1200, "duration_s": 60}
+    ],
+    "warmup_s": 30,
+    "in_loadgen_retries": 2
+  }
+}

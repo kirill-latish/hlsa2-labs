@@ -1,0 +1,79 @@
+groups:
+  - name: lab33-rates
+    interval: 5s
+    rules:
+      # Inbound /checkout success rate from the gateway's perspective.
+      - record: lab33:checkout:success_full:rate1m
+        expr: sum(rate(lab33_gateway_checkout_total{outcome="success_full"}[1m]))
+      - record: lab33:checkout:success_degraded:rate1m
+        expr: sum(rate(lab33_gateway_checkout_total{outcome="success_degraded"}[1m]))
+      - record: lab33:checkout:failed:rate1m
+        expr: sum(rate(lab33_gateway_checkout_total{outcome="failed"}[1m]))
+      - record: lab33:checkout:shed:rate1m
+        expr: sum(rate(lab33_gateway_checkout_total{outcome="shed"}[1m]))
+      - record: lab33:checkout:total:rate1m
+        expr: sum(rate(lab33_gateway_checkout_total[1m]))
+      # Critical-journey success ratio (degraded counts as success).
+      - record: lab33:critical_journey:success_ratio
+        expr: |
+          (lab33:checkout:success_full:rate1m + lab33:checkout:success_degraded:rate1m)
+          / clamp_min(lab33:checkout:total:rate1m, 1e-9)
+
+  - name: lab33-deps
+    interval: 5s
+    rules:
+      - record: lab33:dep:calls:rate1m
+        expr: sum by (dep, outcome) (rate(lab33_gateway_dep_calls_total[1m]))
+      - record: lab33:dep:success_ratio:1m
+        expr: |
+          sum by (dep) (rate(lab33_gateway_dep_calls_total{outcome="success"}[1m]))
+          / clamp_min(sum by (dep) (rate(lab33_gateway_dep_calls_total[1m])), 1e-9)
+      - record: lab33:dep:p99:1m
+        expr: histogram_quantile(0.99, sum by (dep, le) (rate(lab33_gateway_dep_call_duration_seconds_bucket[1m])))
+
+  - name: lab33-pools
+    interval: 5s
+    rules:
+      - record: lab33:pool:utilization
+        expr: |
+          lab33_gateway_pool_inflight
+          / clamp_min(lab33_gateway_pool_max, 1e-9)
+      - record: lab33:shed:rate1m
+        expr: sum by (scope, dep) (rate(lab33_gateway_shed_total[1m]))
+
+  - name: lab33-loadgen
+    interval: 5s
+    rules:
+      - record: lab33:offered:rate1m
+        expr: sum by (label) (rate(lab33_loadgen_offered_total[1m]))
+      - record: lab33:served:rate1m
+        expr: sum by (label) (rate(lab33_loadgen_served_total[1m]))
+      - record: lab33:retries:rate1m
+        expr: sum by (label) (rate(lab33_loadgen_retries_total[1m]))
+      # Retry amplification: retries / served.
+      - record: lab33:retry_amplification:1m
+        expr: |
+          lab33:retries:rate1m
+          / clamp_min(lab33:served:rate1m, 1e-9)
+      # Offered-vs-served gap is the metastable-loop signal.
+      - record: lab33:goodput_gap:rate1m
+        expr: lab33:offered:rate1m - lab33:served:rate1m
+
+  - name: lab33-alerts
+    interval: 30s
+    rules:
+      - alert: CheckoutSuccessBelowSLO
+        expr: lab33:critical_journey:success_ratio < 0.99
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Checkout success {{ printf \"%.3f\" $value }} below 99% for 2m"
+          description: "Inspect docs/img/grafana-row1.png and the dep-level success row to identify the failed dependency."
+      - alert: RetryStorm
+        expr: lab33:retry_amplification:1m > 0.5
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Retry amplification > 0.5 ({{ printf \"%.2f\" $value }}). Enable RETRY_BUDGET + LOAD_SHED."

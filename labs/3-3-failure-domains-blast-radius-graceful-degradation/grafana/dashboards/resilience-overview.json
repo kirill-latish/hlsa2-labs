@@ -1,0 +1,166 @@
+{
+  "uid": "resilience-overview",
+  "title": "Resilience Overview",
+  "tags": ["hlsa2", "lab3-3"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Critical path (rows 1-2 are the screenshots step 8 asks for)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Critical-journey success ratio (degraded counts as success)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "lab33:critical_journey:success_ratio", "legendFormat": "success_ratio", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.99 },
+              { "color": "green", "value": 0.995 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Gateway p99 latency (s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(lab33_http_request_duration_seconds_bucket{service=\"gateway\",endpoint=\"/checkout\"}[1m])))",
+          "legendFormat": "p99",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Per-dependency success + latency (row 2)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Per-dep success ratio",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "lab33:dep:success_ratio:1m", "legendFormat": "{{dep}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Per-dep p99 latency (s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "lab33:dep:p99:1m", "legendFormat": "{{dep}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Pool depth + per-dep shedding (row 3)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Pool utilization (inflight / max)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        { "expr": "lab33:pool:utilization", "legendFormat": "{{dep}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1 } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Breaker state (0=closed, 1=halfopen, 2=open)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        { "expr": "lab33_gateway_breaker_state", "legendFormat": "{{dep}}", "refId": "A" }
+      ]
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Retry amplification + offered-vs-served (row 4 - the metastable-loop panel)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Offered vs served rate (rps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "lab33:offered:rate1m", "legendFormat": "offered {{label}}", "refId": "A" },
+        { "expr": "lab33:served:rate1m", "legendFormat": "served {{label}}", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Retry amplification ratio (retries/served)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "targets": [
+        { "expr": "lab33:retry_amplification:1m", "legendFormat": "{{label}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Active resilience controls (1=on)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 36 },
+      "targets": [
+        { "expr": "lab33_gateway_control_enabled", "legendFormat": "{{control}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Active fault injections (1=live)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 42 },
+      "targets": [
+        { "expr": "lab33_fault_active", "legendFormat": "{{dep}}/{{mode}}", "refId": "A" }
+      ]
+    }
+  ]
+}

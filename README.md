@@ -16,6 +16,7 @@ you benchmark, improve, and document.
 | 2-2 | [labs/2-2-red-use-sli-slo-alert-quality](labs/2-2-red-use-sli-slo-alert-quality/) | RED, USE, SLIs, SLOs, and Alert Quality |
 | 2-3 | [labs/2-3-load-testing-stress-testing-benchmark-methodology](labs/2-3-load-testing-stress-testing-benchmark-methodology/) | Load Testing, Stress Testing, and Benchmark Methodology |
 | 3-2 | [labs/3-2-sync-vs-async-rest-grpc-events](labs/3-2-sync-vs-async-rest-grpc-events/) | Synchronous vs Asynchronous Communication (REST, gRPC, Events) |
+| 3-3 | [labs/3-3-failure-domains-blast-radius-graceful-degradation](labs/3-3-failure-domains-blast-radius-graceful-degradation/) | Failure Domains, Blast Radius, and Graceful Degradation |
 
 ## Getting Started
 
@@ -103,6 +104,18 @@ hlsa2-labs/
       runbooks/      ← sync-chain incident + async backpressure runbooks
       docs/          ← review template + dashboard screenshots (committed by you)
       scripts/       ← experiment runners + analyze-* Python scripts
+    3-3-failure-domains-blast-radius-graceful-degradation/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← gateway + 5 deps (price, cart, recommendations, reviews, recently-viewed) + fault-injector + loadgen + Prometheus + Grafana
+      Makefile       ← `make up`, `make bench-baseline`, `make inject-fault`, `make analyze-blast-radius`, `make compare`, `make bench-overload`, `make analyze-overload`, `make check-submission`
+      cmd/           ← Go binaries: gateway, dep-svc, fault-injector, loadgen
+      internal/      ← shared Go packages (metrics, breaker, bulkhead, retry, fallback, fault)
+      prometheus/    ← scrape config + resilience recording rules & alerts
+      grafana/       ← provisioned Resilience Overview dashboard
+      perf/          ← workload profiles + results (committed by you)
+      runbooks/      ← blast-radius incident + retry-storm runbooks
+      docs/          ← review + failure-domains templates, screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* Python scripts
 ```
 
 ## License

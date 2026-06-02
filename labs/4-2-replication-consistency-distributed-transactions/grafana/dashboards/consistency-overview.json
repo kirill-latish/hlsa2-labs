@@ -1,0 +1,124 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Replica lag distribution",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "collapsed": false
+    },
+    {
+      "type": "timeseries",
+      "title": "Replica lag p50/p95/p99/p999 (seconds)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 1},
+      "targets": [
+        {"expr": "replica_lag_seconds:p50_5m", "legendFormat": "{{replica}} p50", "refId": "A"},
+        {"expr": "replica_lag_seconds:p95_5m", "legendFormat": "{{replica}} p95", "refId": "B"},
+        {"expr": "replica_lag_seconds:p99_5m", "legendFormat": "{{replica}} p99", "refId": "C"},
+        {"expr": "replica_lag_seconds:p999_5m", "legendFormat": "{{replica}} p999", "refId": "D"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}
+    },
+    {
+      "type": "timeseries",
+      "title": "Replica lag bytes (current)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 1},
+      "targets": [
+        {"expr": "replica_lag_bytes_current", "legendFormat": "{{replica}}", "refId": "A"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []}
+    },
+    {
+      "type": "row",
+      "title": "Saga + 2PC outcomes",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 10},
+      "collapsed": false
+    },
+    {
+      "type": "timeseries",
+      "title": "place-order success rate (5m)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 11},
+      "targets": [
+        {"expr": "place_order_success_rate:5m", "legendFormat": "{{mode}}", "refId": "A"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}, "overrides": []}
+    },
+    {
+      "type": "timeseries",
+      "title": "place-order p99 latency (5m)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 11},
+      "targets": [
+        {"expr": "place_order_latency_seconds:p99_5m", "legendFormat": "{{mode}} p99", "refId": "A"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}
+    },
+    {
+      "type": "timeseries",
+      "title": "saga step counters (rate)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 20},
+      "targets": [
+        {"expr": "sum by (service, step) (rate(saga_step_applied_total[1m]))", "legendFormat": "{{service}} {{step}} applied", "refId": "A"},
+        {"expr": "sum by (service, step) (rate(saga_step_compensated_total[1m]))", "legendFormat": "{{service}} {{step}} compensated", "refId": "B"},
+        {"expr": "sum by (service, step) (rate(saga_step_failed_total[1m]))", "legendFormat": "{{service}} {{step}} failed", "refId": "C"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "2PC in-doubt count + lock-hold",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 20},
+      "targets": [
+        {"expr": "twopc_in_doubt_count", "legendFormat": "{{service}}", "refId": "A"}
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Outbox + consumer",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 29},
+      "collapsed": false
+    },
+    {
+      "type": "timeseries",
+      "title": "Outbox publish rate per source",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 30},
+      "targets": [
+        {"expr": "rate(outbox_published_total[1m])", "legendFormat": "{{source}}", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Consumer events processed (per mode)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 30},
+      "targets": [
+        {"expr": "rate(consumer_events_processed_total[1m])", "legendFormat": "{{mode}}", "refId": "A"},
+        {"expr": "rate(consumer_errors_total[1m])", "legendFormat": "{{mode}} errors", "refId": "B"}
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["hlsa2", "lab4-2", "consistency"],
+  "templating": {"list": []},
+  "time": {"from": "now-15m", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Consistency Overview",
+  "uid": "lab42-consistency",
+  "version": 1,
+  "weekStart": ""
+}

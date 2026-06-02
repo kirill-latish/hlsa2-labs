@@ -1,0 +1,28 @@
+# Build artifacts
+/bin/
+*.exe
+
+# Local env
+.env
+.env.local
+
+# Go
+vendor/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Per-run benchmark output (still tracked: docs cite specific runs).
+# Students should `git add` the runs they cite from docs/review.md.
+# Everything else under perf/results/ is ignored.
+perf/results/**/.tmp/
+perf/results/**/*.lock
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

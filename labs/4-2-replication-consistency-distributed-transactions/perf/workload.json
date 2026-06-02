@@ -1,0 +1,30 @@
+{
+  "_comment": "Reference workload model for lab 4-2 benchmarks. The bench scripts read these defaults but each Make target also accepts overrides on the CLI (RATE, DURATION, RUNS).",
+  "lag": {
+    "write_rate_per_s": 500,
+    "row_size_bytes": 256,
+    "duration_s": 300,
+    "sample_period_ms": 100
+  },
+  "raw": {
+    "rate_per_s": 200,
+    "duration_s": 300,
+    "warmup_s": 10,
+    "session_pin_ttl_ms": 1500,
+    "lsn_wait_max_ms": 800,
+    "primary_read_ttl_ms": 1500
+  },
+  "saga": {
+    "rate_per_s": 50,
+    "duration_s": 300,
+    "warmup_s": 10,
+    "compensation_retry_max": 5
+  },
+  "twopc": {
+    "rate_per_s": 50,
+    "duration_s": 300,
+    "warmup_s": 10,
+    "prepare_timeout_ms": 5000,
+    "commit_timeout_ms": 5000
+  }
+}

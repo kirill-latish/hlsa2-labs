@@ -1,0 +1,453 @@
+name: hlsa2-lab42
+
+# Shared service env. Each service overrides what it needs on top of
+# this. Per-service Postgres URLs are explicit because the saga +
+# 2PC participants are separate failure domains.
+x-svc-env: &svc-env
+  LOG_LEVEL: info
+  FAULT_INJECTOR_URL: http://fault-injector:9000
+  REDPANDA_BROKERS: redpanda:9092
+  EVENTS_TOPIC: events
+  DLQ_TOPIC: dlq
+
+x-build: &build-base
+  context: .
+  dockerfile: Dockerfile
+
+services:
+  # ----------------------------------------------------------------
+  # Postgres cluster for replication experiments (steps 3, 4, 7)
+  # ----------------------------------------------------------------
+
+  postgres-primary:
+    image: postgres:16-alpine
+    container_name: lab42-postgres-primary
+    environment:
+      POSTGRES_USER: hlsa
+      POSTGRES_PASSWORD: hlsa
+      POSTGRES_DB: hlsa
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+      - "-c"
+      - "hba_file=/etc/postgresql/pg_hba.conf"
+    volumes:
+      - ./postgres/primary/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/primary/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/primary/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab42_primary_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_PRIMARY_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hlsa -d hlsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  postgres-replica-1: &replica
+    image: postgres:16-alpine
+    container_name: lab42-postgres-replica-1
+    environment:
+      POSTGRES_USER: hlsa
+      POSTGRES_PASSWORD: hlsa
+      PGUSER: hlsa
+      PRIMARY_HOST: postgres-primary
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator
+      REPLICA_NAME: replica1
+    user: postgres
+    volumes:
+      - ./postgres/replica/setup-replica.sh:/usr/local/bin/setup-replica.sh:ro
+      - lab42_replica1_data:/var/lib/postgresql/data
+    entrypoint: ["/usr/local/bin/setup-replica.sh"]
+    ports:
+      - "${LAB_REPLICA1_PORT:-5433}:5432"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hlsa -d hlsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  postgres-replica-2:
+    <<: *replica
+    container_name: lab42-postgres-replica-2
+    environment:
+      POSTGRES_USER: hlsa
+      POSTGRES_PASSWORD: hlsa
+      PGUSER: hlsa
+      PRIMARY_HOST: postgres-primary
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator
+      REPLICA_NAME: replica2
+    volumes:
+      - ./postgres/replica/setup-replica.sh:/usr/local/bin/setup-replica.sh:ro
+      - lab42_replica2_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_REPLICA2_PORT:-5434}:5432"
+
+  # ----------------------------------------------------------------
+  # Per-service Postgres (saga + 2PC failure domains)
+  # ----------------------------------------------------------------
+
+  payment-pg:
+    image: postgres:16-alpine
+    container_name: lab42-payment-pg
+    environment:
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment
+      POSTGRES_DB: payment
+    command:
+      - "postgres"
+      - "-c"
+      - "max_prepared_transactions=64"
+    volumes:
+      - ./postgres/payment/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab42_payment_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_PAYMENT_PG_PORT:-5440}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment -d payment"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  inventory-pg:
+    image: postgres:16-alpine
+    container_name: lab42-inventory-pg
+    environment:
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: inventory
+      POSTGRES_DB: inventory
+    command:
+      - "postgres"
+      - "-c"
+      - "max_prepared_transactions=64"
+    volumes:
+      - ./postgres/inventory/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab42_inventory_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_INVENTORY_PG_PORT:-5441}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory -d inventory"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  shipping-pg:
+    image: postgres:16-alpine
+    container_name: lab42-shipping-pg
+    environment:
+      POSTGRES_USER: shipping
+      POSTGRES_PASSWORD: shipping
+      POSTGRES_DB: shipping
+    command:
+      - "postgres"
+      - "-c"
+      - "max_prepared_transactions=64"
+    volumes:
+      - ./postgres/shipping/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab42_shipping_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_SHIPPING_PG_PORT:-5442}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shipping -d shipping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # ----------------------------------------------------------------
+  # Redpanda (Kafka-compatible event broker)
+  # ----------------------------------------------------------------
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.10
+    container_name: lab42-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+      - --rpc-addr=0.0.0.0:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "${LAB_REDPANDA_KAFKA_PORT:-9092}:9092"
+      - "${LAB_REDPANDA_ADMIN_PORT:-9644}:9644"
+    volumes:
+      - lab42_redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health -X admin.hosts=localhost:9644 | grep -E 'Healthy:.*true' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # ----------------------------------------------------------------
+  # Application services
+  # ----------------------------------------------------------------
+
+  fault-injector:
+    build:
+      <<: *build-base
+      args:
+        BIN: fault-injector
+    container_name: lab42-fault-injector
+    environment:
+      <<: *svc-env
+      PORT: "9000"
+    ports:
+      - "${LAB_FAULT_INJECTOR_PORT:-9000}:9000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  payment-svc:
+    build:
+      <<: *build-base
+      args:
+        BIN: payment-svc
+    container_name: lab42-payment-svc
+    environment:
+      <<: *svc-env
+      PORT: "8081"
+      SERVICE_NAME: payment
+      DATABASE_URL: postgres://payment:payment@payment-pg:5432/payment?sslmode=disable
+    ports:
+      - "${LAB_PAYMENT_SVC_PORT:-8081}:8081"
+    depends_on:
+      payment-pg:
+        condition: service_healthy
+      fault-injector:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  inventory-svc:
+    build:
+      <<: *build-base
+      args:
+        BIN: inventory-svc
+    container_name: lab42-inventory-svc
+    environment:
+      <<: *svc-env
+      PORT: "8082"
+      SERVICE_NAME: inventory
+      DATABASE_URL: postgres://inventory:inventory@inventory-pg:5432/inventory?sslmode=disable
+    ports:
+      - "${LAB_INVENTORY_SVC_PORT:-8082}:8082"
+    depends_on:
+      inventory-pg:
+        condition: service_healthy
+      fault-injector:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shipping-svc:
+    build:
+      <<: *build-base
+      args:
+        BIN: shipping-svc
+    container_name: lab42-shipping-svc
+    environment:
+      <<: *svc-env
+      PORT: "8083"
+      SERVICE_NAME: shipping
+      DATABASE_URL: postgres://shipping:shipping@shipping-pg:5432/shipping?sslmode=disable
+    ports:
+      - "${LAB_SHIPPING_SVC_PORT:-8083}:8083"
+    depends_on:
+      shipping-pg:
+        condition: service_healthy
+      fault-injector:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  orchestrator:
+    build:
+      <<: *build-base
+      args:
+        BIN: orchestrator
+    container_name: lab42-orchestrator
+    environment:
+      <<: *svc-env
+      PORT: "8080"
+      PAYMENT_URL: http://payment-svc:8081
+      INVENTORY_URL: http://inventory-svc:8082
+      SHIPPING_URL: http://shipping-svc:8083
+    ports:
+      - "${LAB_ORCHESTRATOR_PORT:-8080}:8080"
+    depends_on:
+      payment-svc:
+        condition: service_healthy
+      inventory-svc:
+        condition: service_healthy
+      shipping-svc:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  outbox-relay:
+    build:
+      <<: *build-base
+      args:
+        BIN: outbox-relay
+    container_name: lab42-outbox-relay
+    environment:
+      <<: *svc-env
+      PORT: "9102"
+      PAYMENT_DSN: postgres://payment:payment@payment-pg:5432/payment?sslmode=disable
+      INVENTORY_DSN: postgres://inventory:inventory@inventory-pg:5432/inventory?sslmode=disable
+      SHIPPING_DSN: postgres://shipping:shipping@shipping-pg:5432/shipping?sslmode=disable
+      POLL_INTERVAL_MS: "100"
+    ports:
+      - "${LAB_OUTBOX_RELAY_PORT:-9102}:9102"
+    depends_on:
+      payment-pg:
+        condition: service_healthy
+      inventory-pg:
+        condition: service_healthy
+      shipping-pg:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9102/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  consumer:
+    build:
+      <<: *build-base
+      args:
+        BIN: consumer
+    container_name: lab42-consumer
+    environment:
+      <<: *svc-env
+      PORT: "9103"
+      DATABASE_URL: postgres://payment:payment@payment-pg:5432/payment?sslmode=disable
+      CONSUMER_GROUP: lab42-consumer
+      CONSUMER_MODE: idempotent
+    ports:
+      - "${LAB_CONSUMER_PORT:-9103}:9103"
+    depends_on:
+      payment-pg:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9103/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  lag-sampler:
+    build:
+      <<: *build-base
+      args:
+        BIN: lag-sampler
+    container_name: lab42-lag-sampler
+    environment:
+      <<: *svc-env
+      PORT: "9101"
+      PRIMARY_DSN: postgres://hlsa:hlsa@postgres-primary:5432/hlsa?sslmode=disable
+      REPLICA1_DSN: postgres://hlsa:hlsa@postgres-replica-1:5432/hlsa?sslmode=disable
+      REPLICA2_DSN: postgres://hlsa:hlsa@postgres-replica-2:5432/hlsa?sslmode=disable
+      SAMPLE_PERIOD_MS: "100"
+      LAG_OUTPUT_DIR: /perf/lag
+    volumes:
+      - ./perf/results/lag:/perf/lag
+    ports:
+      - "${LAB_LAG_SAMPLER_PORT:-9101}:9101"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica-1:
+        condition: service_healthy
+      postgres-replica-2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9101/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  # ----------------------------------------------------------------
+  # Observability
+  # ----------------------------------------------------------------
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab42-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab42_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - orchestrator
+      - lag-sampler
+      - consumer
+      - outbox-relay
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab42-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab42_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab42_primary_data:
+  lab42_replica1_data:
+  lab42_replica2_data:
+  lab42_payment_data:
+  lab42_inventory_data:
+  lab42_shipping_data:
+  lab42_redpanda_data:
+  lab42_prom_data:
+  lab42_grafana_data:

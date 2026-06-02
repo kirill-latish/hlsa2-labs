@@ -1,0 +1,46 @@
+groups:
+  - name: consistency-recording
+    interval: 10s
+    rules:
+      - record: replica_lag_seconds:p50_5m
+        expr: histogram_quantile(0.50, sum by (replica, le) (rate(replica_lag_seconds_bucket[5m])))
+      - record: replica_lag_seconds:p95_5m
+        expr: histogram_quantile(0.95, sum by (replica, le) (rate(replica_lag_seconds_bucket[5m])))
+      - record: replica_lag_seconds:p99_5m
+        expr: histogram_quantile(0.99, sum by (replica, le) (rate(replica_lag_seconds_bucket[5m])))
+      - record: replica_lag_seconds:p999_5m
+        expr: histogram_quantile(0.999, sum by (replica, le) (rate(replica_lag_seconds_bucket[5m])))
+
+      - record: place_order_latency_seconds:p99_5m
+        expr: histogram_quantile(0.99, sum by (mode, le) (rate(place_order_latency_seconds_bucket[5m])))
+
+      - record: place_order_success_rate:5m
+        expr: |
+          sum by (mode) (rate(place_order_success_total[5m]))
+            /
+          (sum by (mode) (rate(place_order_success_total[5m])) + sum by (mode) (rate(place_order_failed_total[5m])))
+
+      - record: outbox_publish_lag:1m
+        expr: sum by (source) (rate(outbox_published_total[1m]))
+
+      - record: twopc_in_doubt:active
+        expr: sum by (service) (twopc_in_doubt_count)
+
+  - name: consistency-alerts
+    interval: 30s
+    rules:
+      - alert: ReplicaLagHigh
+        expr: replica_lag_seconds:p99_5m > 1
+        for: 1m
+        labels:
+          severity: warn
+        annotations:
+          summary: "Replica {{ $labels.replica }} p99 lag is {{ $value }}s"
+
+      - alert: TwoPCInDoubt
+        expr: twopc_in_doubt:active > 0
+        for: 30s
+        labels:
+          severity: page
+        annotations:
+          summary: "{{ $labels.service }} has {{ $value }} prepared-but-uncommitted XA tx"

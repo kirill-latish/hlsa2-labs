@@ -17,6 +17,7 @@ you benchmark, improve, and document.
 | 2-3 | [labs/2-3-load-testing-stress-testing-benchmark-methodology](labs/2-3-load-testing-stress-testing-benchmark-methodology/) | Load Testing, Stress Testing, and Benchmark Methodology |
 | 3-2 | [labs/3-2-sync-vs-async-rest-grpc-events](labs/3-2-sync-vs-async-rest-grpc-events/) | Synchronous vs Asynchronous Communication (REST, gRPC, Events) |
 | 3-3 | [labs/3-3-failure-domains-blast-radius-graceful-degradation](labs/3-3-failure-domains-blast-radius-graceful-degradation/) | Failure Domains, Blast Radius, and Graceful Degradation |
+| 4-2 | [labs/4-2-replication-consistency-distributed-transactions](labs/4-2-replication-consistency-distributed-transactions/) | Replication, Consistency, and Distributed Transactions |
 
 ## Getting Started
 
@@ -115,6 +116,19 @@ hlsa2-labs/
       perf/          ← workload profiles + results (committed by you)
       runbooks/      ← blast-radius incident + retry-storm runbooks
       docs/          ← review + failure-domains templates, screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* Python scripts
+    4-2-replication-consistency-distributed-transactions/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← Postgres primary + 2 replicas + 3 service DBs + Redpanda + payment/inventory/shipping svcs + orchestrator + outbox-relay + consumer + lag-sampler + fault-injector + Prometheus + Grafana
+      Makefile       ← `make up`, `make bench-lag`, `make bench-raw`, `make bench-2pc`, `make bench-saga`, `make assert-idempotent`, `make regression`, `make analyze`, `make check-submission`
+      cmd/           ← Go binaries: payment-svc, inventory-svc, shipping-svc, orchestrator, outbox-relay, consumer, lag-sampler, raw-bench, loadgen-saga, seed-events, fault-injector
+      internal/      ← shared Go packages (lsn, outbox, saga, twopc, consumer, readpolicy, metrics, fault, payloads, svchelp)
+      postgres/      ← primary postgresql.conf + pg_hba.conf, replica setup-replica.sh, per-service init.sql (events_outbox + processed_events + twopc_log)
+      prometheus/    ← scrape config + consistency recording rules & alerts
+      grafana/       ← provisioned Consistency Overview dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← replica-lag incident + saga-stuck incident
+      docs/          ← review template + architecture diagram + screenshots (committed by you)
       scripts/       ← bench drivers + analyze-* Python scripts
 ```
 

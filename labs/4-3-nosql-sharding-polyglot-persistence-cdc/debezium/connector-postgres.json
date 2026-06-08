@@ -1,0 +1,40 @@
+{
+    "name": "lab43-postgres",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "debezium",
+        "database.password": "debezium",
+        "database.dbname": "hlsa",
+
+        "topic.prefix": "cdc",
+        "publication.name": "lab43_pub",
+        "publication.autocreate.mode": "disabled",
+        "slot.name": "lab43_slot",
+        "plugin.name": "pgoutput",
+
+        "schema.include.list": "public",
+        "table.include.list": "public.users,public.products,public.orders",
+
+        "tombstones.on.delete": "false",
+        "snapshot.mode": "initial",
+        "decimal.handling.mode": "string",
+        "time.precision.mode": "connect",
+        "include.unknown.datatypes": "true",
+        "heartbeat.interval.ms": "5000",
+
+        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "key.converter.schemas.enable": "false",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter.schemas.enable": "false",
+
+        "transforms": "unwrap",
+        "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+        "transforms.unwrap.drop.tombstones": "false",
+        "transforms.unwrap.delete.handling.mode": "rewrite",
+        "transforms.unwrap.add.fields": "op,source.lsn,source.ts_ms,source.txId"
+    }
+}

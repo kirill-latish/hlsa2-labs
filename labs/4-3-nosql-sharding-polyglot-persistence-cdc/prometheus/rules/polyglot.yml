@@ -1,0 +1,49 @@
+groups:
+  - name: lab43.polyglot.recording
+    interval: 5s
+    rules:
+      # max-to-mean shard skew per collection. Drives the dashboard's
+      # "skew" panel and the apply-fix decision.
+      - record: lab43:max_to_mean_ratio
+        expr: |
+          (
+            max by (collection) (lab43_collection_doc_count)
+            /
+            (
+              avg by (collection) (lab43_collection_doc_count) > 0
+            )
+          )
+
+      # Cluster-wide insert rate per shard.
+      - record: lab43:shard_insert_rate
+        expr: rate(lab43_shard_inserts_total[1m])
+
+      # CDC lag percentiles fan-out (used by Grafana).
+      - record: lab43:cdc_lag_p50
+        expr: histogram_quantile(0.5, sum by (le, index) (rate(lab43_cdc_lag_ms_bucket[1m])))
+      - record: lab43:cdc_lag_p95
+        expr: histogram_quantile(0.95, sum by (le, index) (rate(lab43_cdc_lag_ms_bucket[1m])))
+      - record: lab43:cdc_lag_p99
+        expr: histogram_quantile(0.99, sum by (le, index) (rate(lab43_cdc_lag_ms_bucket[1m])))
+
+  - name: lab43.polyglot.alerts
+    rules:
+      - alert: HotShardSuspected
+        expr: lab43:max_to_mean_ratio > 1.5
+        for: 2m
+        labels:
+          severity: warning
+          lab: lab43
+        annotations:
+          summary: "Hot shard suspected on collection {{ $labels.collection }}"
+          description: "Max/mean shard doc count is {{ $value }} (>1.5)"
+
+      - alert: CDCLagHigh
+        expr: lab43:cdc_lag_p99 > 30000
+        for: 1m
+        labels:
+          severity: warning
+          lab: lab43
+        annotations:
+          summary: "CDC lag p99 > 30s on index {{ $labels.index }}"
+          description: "Last sample: {{ $value }} ms"

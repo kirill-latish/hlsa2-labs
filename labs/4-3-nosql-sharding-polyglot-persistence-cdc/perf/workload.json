@@ -1,0 +1,26 @@
+{
+  "comment": "Reference values for the bench-* targets. Override at the make CLI.",
+  "skew": {
+    "write_rate_per_sec": 200,
+    "duration": "5m",
+    "warmup_s": 5,
+    "tenant_count": 64,
+    "zipf_s": 1.07,
+    "celebrity_weight": 0.0,
+    "hash_suffix_buckets": 16
+  },
+  "cdc_lag": {
+    "base_rate_per_sec": 100,
+    "rate_2x": 200,
+    "duration": "5m",
+    "warmup_s": 5,
+    "poll_interval_ms": 25,
+    "poll_timeout_ms": 30000
+  },
+  "polyglot": {
+    "duration": "3m",
+    "freshness": "lsn-wait",
+    "lsn_wait_max_ms": 1500,
+    "warmup_s": 5
+  }
+}

@@ -1,0 +1,23 @@
+{
+    "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "refresh_interval": "1s"
+    },
+    "mappings": {
+        "dynamic": "strict",
+        "properties": {
+            "id":           { "type": "long" },
+            "tenant_id":    { "type": "keyword" },
+            "user_id":      { "type": "long" },
+            "product_id":   { "type": "long" },
+            "quantity":     { "type": "integer" },
+            "total_cents":  { "type": "long" },
+            "status":       { "type": "keyword" },
+            "committed_at": { "type": "date" },
+            "updated_at":   { "type": "date" },
+            "_indexed_at":  { "type": "date" },
+            "_lsn":         { "type": "keyword" }
+        }
+    }
+}

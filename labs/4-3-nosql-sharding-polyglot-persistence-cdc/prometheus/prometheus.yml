@@ -1,0 +1,20 @@
+global:
+  scrape_interval:     5s
+  scrape_timeout:      4s
+  evaluation_interval: 5s
+
+rule_files:
+  - /etc/prometheus/rules/polyglot.yml
+
+scrape_configs:
+  - job_name: lab43_loadgen
+    static_configs:
+      - targets: ['loadgen:9000']
+
+  - job_name: lab43_es_consumer
+    static_configs:
+      - targets: ['es-consumer:9000']
+
+  - job_name: lab43_partition_stats
+    static_configs:
+      - targets: ['partition-stats:9000']

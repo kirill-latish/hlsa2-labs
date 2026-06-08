@@ -1,0 +1,92 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "title": "Lab 4-3 — Polyglot Overview",
+  "tags": ["lab43", "polyglot", "sharding", "cdc"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {"from": "now-30m", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Per-shard insert rate (op/s)",
+      "id": 1,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "rate(lab43_shard_inserts_total[1m])", "legendFormat": "{{shard}}", "refId": "A"}
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Per-shard CPU user-seconds",
+      "id": 2,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "rate(lab43_shard_cpu_user_seconds_total[1m])", "legendFormat": "{{shard}}", "refId": "A"}
+      ],
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Per-shard doc count by collection",
+      "id": 3,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "lab43_collection_doc_count", "legendFormat": "{{collection}} / {{shard}}", "refId": "A"}
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Skew: max/mean per collection",
+      "id": 4,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "lab43:max_to_mean_ratio", "legendFormat": "{{collection}}", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1.3},
+              {"color": "red", "value": 1.7}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "CDC lag percentiles (ms)",
+      "id": 5,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "lab43:cdc_lag_p50", "legendFormat": "p50 / {{index}}", "refId": "A"},
+        {"expr": "lab43:cdc_lag_p95", "legendFormat": "p95 / {{index}}", "refId": "B"},
+        {"expr": "lab43:cdc_lag_p99", "legendFormat": "p99 / {{index}}", "refId": "C"}
+      ],
+      "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Loadgen: hot-share & write-rate",
+      "id": 6,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "rate(lab43_loadgen_writes_total[1m])", "legendFormat": "{{shard_key}} / {{outcome}}", "refId": "A"},
+        {"expr": "lab43_loadgen_hot_share", "legendFormat": "hot-share / {{entity}}", "refId": "B"}
+      ],
+      "gridPos": {"x": 0, "y": 24, "w": 24, "h": 8}
+    }
+  ]
+}

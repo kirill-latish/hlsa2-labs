@@ -1,0 +1,411 @@
+name: hlsa2-lab43
+
+# Shared service env. Each Go service overrides what it needs on top.
+x-svc-env: &svc-env
+  LOG_LEVEL: info
+  FAULT_INJECTOR_URL: http://fault-injector:9000
+  REDPANDA_BROKERS: redpanda:9092
+  MONGO_HOSTS: mongos-1:27017,mongos-2:27017
+  MONGO_DB: lab43
+  POSTGRES_DSN: postgres://hlsa:hlsa@postgres:5432/hlsa?sslmode=disable
+  ES_URL: http://elasticsearch:9200
+
+x-build: &build-base
+  context: .
+  dockerfile: Dockerfile
+
+# Single-mongod shard config block (shared via YAML anchor).
+x-mongo-shard: &mongo-shard-base
+  image: mongo:7.0
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+    interval: 5s
+    timeout: 3s
+    retries: 30
+
+services:
+  # ----------------------------------------------------------------
+  # Postgres (system of record for users/products/orders, CDC source)
+  # ----------------------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: lab43-postgres
+    environment:
+      POSTGRES_USER: hlsa
+      POSTGRES_PASSWORD: hlsa
+      POSTGRES_DB: hlsa
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+      - "-c"
+      - "hba_file=/etc/postgresql/pg_hba.conf"
+    volumes:
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab43_pg_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_POSTGRES_PORT:-15433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hlsa -d hlsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # ----------------------------------------------------------------
+  # Mongo config server replica set (mongos discovers shards via this RS)
+  # ----------------------------------------------------------------
+
+  mongo-config-1: &mongo-config-base
+    image: mongo:7.0
+    container_name: lab43-mongo-config-1
+    command: ["mongod", "--configsvr", "--replSet", "cfgrs", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - lab43_mongo_cfg1:/data/db
+    ports:
+      - "${LAB_MONGO_CONFIG1_PORT:-17017}:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  mongo-config-2:
+    <<: *mongo-config-base
+    container_name: lab43-mongo-config-2
+    volumes:
+      - lab43_mongo_cfg2:/data/db
+    ports:
+      - "${LAB_MONGO_CONFIG2_PORT:-17018}:27017"
+
+  mongo-config-3:
+    <<: *mongo-config-base
+    container_name: lab43-mongo-config-3
+    volumes:
+      - lab43_mongo_cfg3:/data/db
+    ports:
+      - "${LAB_MONGO_CONFIG3_PORT:-17019}:27017"
+
+  # ----------------------------------------------------------------
+  # Mongo shards (single-mongod each for laptop portability).
+  # In production these would be replica sets, but the topic/lab is
+  # about partitioning + CDC, not local durability.
+  # ----------------------------------------------------------------
+
+  mongo-shard-1:
+    <<: *mongo-shard-base
+    container_name: lab43-mongo-shard-1
+    command: ["mongod", "--shardsvr", "--replSet", "shard1rs", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - lab43_mongo_shard1:/data/db
+    ports:
+      - "${LAB_MONGO_SHARD1_PORT:-17021}:27017"
+
+  mongo-shard-2:
+    <<: *mongo-shard-base
+    container_name: lab43-mongo-shard-2
+    command: ["mongod", "--shardsvr", "--replSet", "shard2rs", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - lab43_mongo_shard2:/data/db
+    ports:
+      - "${LAB_MONGO_SHARD2_PORT:-17022}:27017"
+
+  mongo-shard-3:
+    <<: *mongo-shard-base
+    container_name: lab43-mongo-shard-3
+    command: ["mongod", "--shardsvr", "--replSet", "shard3rs", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - lab43_mongo_shard3:/data/db
+    ports:
+      - "${LAB_MONGO_SHARD3_PORT:-17023}:27017"
+
+  # mongo-bootstrap: one-shot container that initialises both replica
+  # sets (config + shards), adds shards to the cluster, enables sharding
+  # on the lab43 db, and pre-shards the four collections used by the
+  # benches. Idempotent.
+  mongo-bootstrap:
+    image: mongo:7.0
+    container_name: lab43-mongo-bootstrap
+    restart: "no"
+    volumes:
+      - ./mongo/config-init.js:/init/config-init.js:ro
+      - ./mongo/shards-init.js:/init/shards-init.js:ro
+      - ./mongo/bootstrap.sh:/init/bootstrap.sh:ro
+    entrypoint: ["bash", "/init/bootstrap.sh"]
+    depends_on:
+      mongo-config-1:
+        condition: service_healthy
+      mongo-config-2:
+        condition: service_healthy
+      mongo-config-3:
+        condition: service_healthy
+      mongo-shard-1:
+        condition: service_healthy
+      mongo-shard-2:
+        condition: service_healthy
+      mongo-shard-3:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------
+  # mongos routers (query the config RS, route to the right shard)
+  # ----------------------------------------------------------------
+
+  mongos-1: &mongos-base
+    image: mongo:7.0
+    container_name: lab43-mongos-1
+    command: ["mongos", "--configdb", "cfgrs/mongo-config-1:27017,mongo-config-2:27017,mongo-config-3:27017", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "${LAB_MONGOS1_PORT:-17040}:27017"
+    depends_on:
+      mongo-bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ping:1}).ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  mongos-2:
+    <<: *mongos-base
+    container_name: lab43-mongos-2
+    ports:
+      - "${LAB_MONGOS2_PORT:-17041}:27017"
+
+  # ----------------------------------------------------------------
+  # Redpanda (Kafka-compatible bus, Debezium target)
+  # ----------------------------------------------------------------
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.10
+    container_name: lab43-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+      - --rpc-addr=0.0.0.0:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "${LAB_REDPANDA_KAFKA_PORT:-19093}:9092"
+      - "${LAB_REDPANDA_ADMIN_PORT:-19645}:9644"
+    volumes:
+      - lab43_redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health -X admin.hosts=localhost:9644 | grep -E 'Healthy:.*true' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # ----------------------------------------------------------------
+  # Debezium Connect (Postgres pgoutput connector -> Redpanda)
+  # ----------------------------------------------------------------
+
+  debezium-connect:
+    image: debezium/connect:2.7.3.Final
+    container_name: lab43-debezium-connect
+    environment:
+      BOOTSTRAP_SERVERS: redpanda:9092
+      GROUP_ID: lab43-connect
+      CONFIG_STORAGE_TOPIC: lab43_connect_configs
+      OFFSET_STORAGE_TOPIC: lab43_connect_offsets
+      STATUS_STORAGE_TOPIC: lab43_connect_statuses
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      OFFSET_FLUSH_INTERVAL_MS: "5000"
+    ports:
+      - "${LAB_DEBEZIUM_PORT:-18083}:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+
+  # ----------------------------------------------------------------
+  # Elasticsearch (derived store for search / polyglot reads)
+  # ----------------------------------------------------------------
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: lab43-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "false"
+    volumes:
+      - lab43_es_data:/usr/share/elasticsearch/data
+    ports:
+      - "${LAB_ELASTICSEARCH_PORT:-19200}:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health | grep -E '\"status\":\"(green|yellow)\"' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+
+  # ----------------------------------------------------------------
+  # Application Go services
+  # ----------------------------------------------------------------
+
+  fault-injector:
+    build:
+      <<: *build-base
+      args:
+        BIN: fault-injector
+    container_name: lab43-fault-injector
+    environment:
+      <<: *svc-env
+      PORT: "9000"
+    ports:
+      - "${LAB_FAULT_INJECTOR_PORT:-19001}:9000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  loadgen:
+    build:
+      <<: *build-base
+      args:
+        BIN: loadgen
+    container_name: lab43-loadgen
+    environment:
+      <<: *svc-env
+      PORT: "9000"
+      SHARD_KEY: candidate
+      WRITE_RATE: "0"
+      TENANT_COUNT: "64"
+      ZIPF_S: "1.07"
+      HASH_SUFFIX_BUCKETS: "16"
+    ports:
+      - "${LAB_LOADGEN_PORT:-18090}:9000"
+    depends_on:
+      mongos-1:
+        condition: service_healthy
+      mongos-2:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      fault-injector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  es-consumer:
+    build:
+      <<: *build-base
+      args:
+        BIN: es-consumer
+    container_name: lab43-es-consumer
+    environment:
+      <<: *svc-env
+      PORT: "9000"
+      CONSUMER_GROUP: lab43-es-consumer
+      CDC_TOPICS: cdc.public.products,cdc.public.orders,cdc.public.users
+      ES_MAPPINGS_DIR: /mappings
+    volumes:
+      - ./elasticsearch/mappings:/mappings:ro
+    ports:
+      - "${LAB_ES_CONSUMER_PORT:-18091}:9000"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  partition-stats:
+    build:
+      <<: *build-base
+      args:
+        BIN: partition-stats
+    container_name: lab43-partition-stats
+    environment:
+      <<: *svc-env
+      PORT: "9000"
+      SHARD_HOSTS: mongo-shard-1:27017,mongo-shard-2:27017,mongo-shard-3:27017
+      SAMPLE_PERIOD_MS: "1000"
+    ports:
+      - "${LAB_PARTITION_STATS_PORT:-18092}:9000"
+    depends_on:
+      mongos-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  # ----------------------------------------------------------------
+  # Observability
+  # ----------------------------------------------------------------
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab43-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab43_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-19091}:9090"
+    depends_on:
+      - loadgen
+      - es-consumer
+      - partition-stats
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab43-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab43_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-13001}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab43_pg_data:
+  lab43_mongo_cfg1:
+  lab43_mongo_cfg2:
+  lab43_mongo_cfg3:
+  lab43_mongo_shard1:
+  lab43_mongo_shard2:
+  lab43_mongo_shard3:
+  lab43_redpanda_data:
+  lab43_es_data:
+  lab43_prom_data:
+  lab43_grafana_data:

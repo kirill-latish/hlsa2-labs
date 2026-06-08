@@ -1,0 +1,27 @@
+# Build artifacts
+/bin/
+*.exe
+
+# Local env
+.env
+.env.local
+
+# Lab state
+.candidate
+
+# Go
+vendor/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Per-run noise (review.md still cites specific result dirs - those should be added).
+perf/results/**/.tmp/
+perf/results/**/*.lock
+
+# Docker / OS
+*.log
+.DS_Store
+Thumbs.db

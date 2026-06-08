@@ -18,6 +18,7 @@ you benchmark, improve, and document.
 | 3-2 | [labs/3-2-sync-vs-async-rest-grpc-events](labs/3-2-sync-vs-async-rest-grpc-events/) | Synchronous vs Asynchronous Communication (REST, gRPC, Events) |
 | 3-3 | [labs/3-3-failure-domains-blast-radius-graceful-degradation](labs/3-3-failure-domains-blast-radius-graceful-degradation/) | Failure Domains, Blast Radius, and Graceful Degradation |
 | 4-2 | [labs/4-2-replication-consistency-distributed-transactions](labs/4-2-replication-consistency-distributed-transactions/) | Replication, Consistency, and Distributed Transactions |
+| 4-3 | [labs/4-3-nosql-sharding-polyglot-persistence-cdc](labs/4-3-nosql-sharding-polyglot-persistence-cdc/) | NoSQL, Sharding, Polyglot Persistence, and CDC |
 
 ## Getting Started
 
@@ -130,6 +131,22 @@ hlsa2-labs/
       runbooks/      ← replica-lag incident + saga-stuck incident
       docs/          ← review template + architecture diagram + screenshots (committed by you)
       scripts/       ← bench drivers + analyze-* Python scripts
+    4-3-nosql-sharding-polyglot-persistence-cdc/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← Postgres + 3 mongo-config + 3 mongo-shard + 2 mongos + Redpanda + Debezium + Elasticsearch + loadgen + es-consumer + partition-stats + fault-injector + Prometheus + Grafana
+      Makefile       ← `make up`, `make seed`, `make bench-skew`, `make inject-hot`, `make apply-fix`, `make compare-skew`, `make bench-cdc-lag`, `make analyze-cdc-lag`, `make bench-polyglot`, `make check-submission`
+      cmd/           ← Go binaries: loadgen, bench-skew, bench-cdc-lag, bench-polyglot, es-consumer, fault-injector, partition-stats
+      internal/      ← shared Go packages (shardkey, cdc, freshness, mongoutil, metrics, fault, payloads, svchelp)
+      postgres/      ← postgresql.conf (wal_level=logical), pg_hba.conf, init.sql (users/products/orders + lab43_pub publication)
+      mongo/         ← config-init.js + shards-init.js (4 pre-sharded collections + chunk pre-split)
+      debezium/      ← pgoutput connector config + idempotent register.sh
+      elasticsearch/ ← per-index mappings (products, orders, users)
+      prometheus/    ← scrape config + max/mean recording rule + cdc lag percentiles
+      grafana/       ← provisioned Polyglot Overview dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← hot-partition incident + CDC-stuck incident
+      docs/          ← review template + architecture diagram + freshness-policy template + screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* / compare-* Python scripts
 ```
 
 ## License

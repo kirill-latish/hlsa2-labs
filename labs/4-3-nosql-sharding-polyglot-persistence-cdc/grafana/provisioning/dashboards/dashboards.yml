@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'lab43'
+    orgId: 1
+    folder: 'lab43'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

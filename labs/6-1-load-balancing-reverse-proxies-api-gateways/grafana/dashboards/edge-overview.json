@@ -1,0 +1,162 @@
+{
+  "uid": "edge-overview",
+  "title": "Edge Overview",
+  "tags": ["hlsa2", "lab6-1"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Edge latency overhead (separate from backend processing)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Edge overhead p50/p99 (s) - the headline number",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "lab61:edge_overhead:p50", "legendFormat": "overhead p50", "refId": "A" },
+        { "expr": "lab61:edge_overhead:p99", "legendFormat": "overhead p99", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Total request p50/p99 (s) = overhead + backend",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "lab61:edge_total:p50", "legendFormat": "total p50", "refId": "A" },
+        { "expr": "lab61:edge_total:p99", "legendFormat": "total p99", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Load distribution + backend health",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Per-backend request distribution (rps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "lab61:backend_requests:rate1m", "legendFormat": "{{backend}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Backend health state (1=up, 0=down)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "lab61_edge_backend_up", "legendFormat": "{{backend}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "min": 0, "max": 1 } }
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Connections + 5xx by class",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "In-flight connections per backend (the least-conn signal)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        { "expr": "lab61_edge_backend_inflight", "legendFormat": "{{backend}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "5xx by class (502=connectivity, 503=health, 504=backend latency)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        { "expr": "lab61:edge_5xx:rate1m", "legendFormat": "{{code}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Offered-vs-served + skew + active config",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Offered vs served rate (rps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "lab61:offered:rate1m", "legendFormat": "offered {{label}}", "refId": "A" },
+        { "expr": "lab61:served:rate1m", "legendFormat": "served {{label}}", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Per-backend request skew (max / mean)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "targets": [
+        { "expr": "lab61:backend_requests:max_vs_mean", "legendFormat": "max/mean", "refId": "A" }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Healthy backends",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 36 },
+      "targets": [
+        { "expr": "lab61:backends_up:count", "legendFormat": "up", "refId": "A" }
+      ]
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Active algorithm",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 36 },
+      "targets": [
+        { "expr": "lab61_edge_algo_active", "legendFormat": "{{algo}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 35,
+      "type": "stat",
+      "title": "Active health-check depth",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 36 },
+      "targets": [
+        { "expr": "lab61_edge_healthcheck_depth_active", "legendFormat": "{{depth}}", "refId": "A" }
+      ]
+    }
+  ]
+}

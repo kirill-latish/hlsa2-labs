@@ -1,0 +1,178 @@
+name: hlsa2-lab61
+
+# The edge tier: an instrumented Go reverse proxy in front of four
+# backends, a shared Postgres dependency (for the deep-health-check
+# cascade), an in-cluster load driver, and a provisioned Prometheus +
+# Grafana pair.
+
+x-backend: &backend-base
+  build:
+    context: .
+    dockerfile: cmd/backend/Dockerfile
+  environment: &backend-env
+    PORT: "8081"
+    DATABASE_URL: "postgres://lab:lab@postgres:5432/lab?sslmode=disable"
+    JITTER_MS: "5"
+    SLOW_EXTRA_MS: "120"
+    LOG_LEVEL: info
+  depends_on:
+    postgres:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
+    interval: 5s
+    timeout: 2s
+    retries: 5
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lab61-postgres
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+      POSTGRES_DB: lab
+    ports:
+      - "${LAB_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - lab61_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend-1:
+    <<: *backend-base
+    container_name: lab61-backend-1
+    environment:
+      <<: *backend-env
+      BACKEND_NAME: backend-1
+      BASE_LATENCY_MS: "10"
+    ports:
+      - "${LAB_BACKEND1_PORT:-8081}:8081"
+
+  backend-2:
+    <<: *backend-base
+    container_name: lab61-backend-2
+    environment:
+      <<: *backend-env
+      BACKEND_NAME: backend-2
+      BASE_LATENCY_MS: "10"
+    ports:
+      - "${LAB_BACKEND2_PORT:-8082}:8081"
+
+  backend-3:
+    <<: *backend-base
+    container_name: lab61-backend-3
+    environment:
+      <<: *backend-env
+      BACKEND_NAME: backend-3
+      BASE_LATENCY_MS: "10"
+    ports:
+      - "${LAB_BACKEND3_PORT:-8083}:8081"
+
+  # backend-4 is deliberately slower per-instance so round-robin
+  # (count-uniform) overloads it while least-conn routes around it.
+  backend-4:
+    <<: *backend-base
+    container_name: lab61-backend-4
+    environment:
+      <<: *backend-env
+      BACKEND_NAME: backend-4
+      BASE_LATENCY_MS: "55"
+    ports:
+      - "${LAB_BACKEND4_PORT:-8084}:8081"
+
+  edge-proxy:
+    build:
+      context: .
+      dockerfile: cmd/edge-proxy/Dockerfile
+    container_name: lab61-edge-proxy
+    environment:
+      PORT: "8080"
+      BACKEND_1_URL: http://backend-1:8081
+      BACKEND_2_URL: http://backend-2:8081
+      BACKEND_3_URL: http://backend-3:8081
+      BACKEND_4_URL: http://backend-4:8081
+      # Defaults the topic guide tunes at runtime via /admin/config.
+      ALGO: round-robin
+      HEALTH_DEPTH: shallow
+      HEALTH_INTERVAL_MS: "10000"
+      FAILURE_THRESHOLD: "3"
+      # Drives the 504 classification: a backend slower than this is a
+      # gateway timeout.
+      PROXY_TIMEOUT_MS: "2000"
+      LOG_LEVEL: info
+    ports:
+      - "${LAB_EDGE_PORT:-8080}:8080"
+    depends_on:
+      backend-1:
+        condition: service_healthy
+      backend-2:
+        condition: service_healthy
+      backend-3:
+        condition: service_healthy
+      backend-4:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  loadgen:
+    build:
+      context: .
+      dockerfile: cmd/loadgen/Dockerfile
+    container_name: lab61-loadgen
+    environment:
+      PORT: "8090"
+      EDGE_URL: http://edge-proxy:8080
+      LOG_LEVEL: info
+    ports:
+      - "${LAB_LOADGEN_PORT:-8090}:8090"
+    depends_on:
+      edge-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab61-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab61_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - edge-proxy
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab61-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab61_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab61_pg_data:
+  lab61_prom_data:
+  lab61_grafana_data:

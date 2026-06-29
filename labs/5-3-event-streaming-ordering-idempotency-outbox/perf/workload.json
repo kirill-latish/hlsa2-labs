@@ -1,0 +1,29 @@
+{
+  "baseline": {
+    "rate_eps": 200,
+    "duration_s": 300,
+    "num_orders": 500,
+    "duplicate_rate": 0.02
+  },
+  "idempotency": {
+    "rate_eps": 200,
+    "duration_s": 60,
+    "duplicate_rate": 0.20,
+    "crash_consumer_midbatch": true
+  },
+  "ordering": {
+    "rate_eps": 200,
+    "duration_s": 180,
+    "keys": ["wrong", "entity"],
+    "partitions": 6
+  },
+  "consistency": {
+    "rate_eps": 100,
+    "crash_after_writes": 10,
+    "modes": ["naive-dualwrite", "outbox"]
+  },
+  "replay": {
+    "from": "earliest",
+    "modes": ["rebuild-only", "reprocess"]
+  }
+}

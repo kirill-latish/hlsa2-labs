@@ -1,0 +1,74 @@
+groups:
+  - name: lab53-throughput
+    interval: 5s
+    rules:
+      - record: lab53:events_produced:rate1m
+        expr: sum(rate(lab53_events_produced_total[1m]))
+      - record: lab53:events_consumed:rate1m
+        expr: sum(rate(lab53_events_consumed_total[1m]))
+      # Offset / pipeline health: produced minus consumed rate. A
+      # persistent positive gap means the consumers are falling behind.
+      - record: lab53:pipeline_gap:rate1m
+        expr: lab53:events_produced:rate1m - lab53:events_consumed:rate1m
+
+  - name: lab53-duplicates
+    interval: 5s
+    rules:
+      - record: lab53:duplicate_suppressed:rate1m
+        expr: sum(rate(lab53_duplicate_suppressed_total[1m]))
+      # Duplicate rate = suppressed duplicates / events consumed. The
+      # headline metric for the idempotency story.
+      - record: lab53:duplicate_rate:1m
+        expr: |
+          sum(rate(lab53_duplicate_suppressed_total[1m]))
+          / clamp_min(sum(rate(lab53_events_consumed_total[1m])), 1e-9)
+
+  - name: lab53-ordering
+    interval: 5s
+    rules:
+      - record: lab53:ordering_violations:rate1m
+        expr: sum(rate(lab53_ordering_violations_total[1m]))
+      - record: lab53:ordering_violation_rate:1m
+        expr: |
+          sum(rate(lab53_ordering_violations_total[1m]))
+          / clamp_min(sum(rate(lab53_events_consumed_total[1m])), 1e-9)
+
+  - name: lab53-lag
+    interval: 5s
+    rules:
+      - record: lab53:consumer_lag_count
+        expr: max(lab53_consumer_lag_count)
+      - record: lab53:consumer_lag_age_seconds
+        expr: max(lab53_consumer_lag_age_seconds)
+      - record: lab53:outbox_backlog
+        expr: max(lab53_outbox_backlog)
+      - record: lab53:side_effects:rate1m
+        expr: sum(rate(lab53_side_effects_total[1m]))
+
+  - name: lab53-alerts
+    interval: 30s
+    rules:
+      - alert: DuplicateStorm
+        expr: lab53:duplicate_rate:1m > 0.5
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Duplicate rate {{ printf \"%.2f\" $value }} > 0.5 for 1m"
+          description: "See runbooks/duplicate-storm-incident.md - likely a redelivery loop or undersized dedup window."
+      - alert: OrderingViolations
+        expr: lab53:ordering_violations:rate1m > 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Ordering violations detected ({{ printf \"%.2f\" $value }}/s)."
+          description: "Same-entity events split across partitions. Verify the partition key is the entity id."
+      - alert: OutboxBacklogGrowing
+        expr: lab53:outbox_backlog > 1000
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Outbox backlog {{ $value }} rows for 2m."
+          description: "See runbooks/dual-write-inconsistency-incident.md - the relay is stalled; events are committed but unshipped."

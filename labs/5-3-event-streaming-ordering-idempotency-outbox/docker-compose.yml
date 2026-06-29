@@ -1,0 +1,210 @@
+name: hlsa2-lab53
+
+# Shared service env. Brokers + topic + DSN are the same everywhere so
+# the producer, relay, and consumers agree on the wire.
+x-svc-env: &svc-env
+  LOG_LEVEL: info
+  REDPANDA_BROKERS: redpanda:9092
+  EVENTS_TOPIC: order-events
+  DATABASE_URL: postgres://lab53:lab53@postgres:5432/lab53?sslmode=disable
+
+# Common shape for the three consumer instances (one shared group).
+x-consumer: &consumer
+  build:
+    context: .
+    dockerfile: cmd/consumer/Dockerfile
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redpanda:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://localhost:9103/healthz"]
+    interval: 5s
+    timeout: 2s
+    retries: 10
+
+services:
+  # ----------------------------------------------------------------
+  # Storage + broker
+  # ----------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: lab53-postgres
+    environment:
+      POSTGRES_USER: lab53
+      POSTGRES_PASSWORD: lab53
+      POSTGRES_DB: lab53
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab53_pg_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab53 -d lab53"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.10
+    container_name: lab53-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+      - --rpc-addr=0.0.0.0:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "${LAB_REDPANDA_KAFKA_PORT:-9092}:9092"
+      - "${LAB_REDPANDA_ADMIN_PORT:-9644}:9644"
+    volumes:
+      - lab53_redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health -X admin.hosts=localhost:9644 | grep -E 'Healthy:.*true' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # ----------------------------------------------------------------
+  # Application services
+  # ----------------------------------------------------------------
+  producer:
+    build:
+      context: .
+      dockerfile: cmd/producer/Dockerfile
+    container_name: lab53-producer
+    restart: unless-stopped
+    environment:
+      <<: *svc-env
+      PORT: "8080"
+      KEY_STRATEGY: "${KEY_STRATEGY:-entity}"
+      PUBLISH_MODE: "${PUBLISH_MODE:-direct}"
+      NUM_ORDERS: "500"
+    ports:
+      - "${LAB_PRODUCER_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  outbox-relay:
+    build:
+      context: .
+      dockerfile: cmd/outbox-relay/Dockerfile
+    container_name: lab53-outbox-relay
+    restart: unless-stopped
+    environment:
+      <<: *svc-env
+      PORT: "9102"
+      POLL_INTERVAL_MS: "100"
+    ports:
+      - "${LAB_OUTBOX_RELAY_PORT:-9102}:9102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9102/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  consumer-1:
+    <<: *consumer
+    container_name: lab53-consumer-1
+    environment:
+      <<: *svc-env
+      PORT: "9103"
+      CONSUMER_GROUP: lab53-consumers
+      CONSUMER_MODE: "${CONSUMER_MODE:-idempotent-consumer}"
+      REPLAY_MODE: "${REPLAY_MODE:-off}"
+      INSTANCE: consumer-1
+      ENABLE_LAG_SAMPLER: "true"
+    ports:
+      - "${LAB_CONSUMER1_PORT:-9103}:9103"
+
+  consumer-2:
+    <<: *consumer
+    container_name: lab53-consumer-2
+    environment:
+      <<: *svc-env
+      PORT: "9103"
+      CONSUMER_GROUP: lab53-consumers
+      CONSUMER_MODE: "${CONSUMER_MODE:-idempotent-consumer}"
+      REPLAY_MODE: "${REPLAY_MODE:-off}"
+      INSTANCE: consumer-2
+      ENABLE_LAG_SAMPLER: "false"
+    ports:
+      - "${LAB_CONSUMER2_PORT:-9113}:9103"
+
+  consumer-3:
+    <<: *consumer
+    container_name: lab53-consumer-3
+    environment:
+      <<: *svc-env
+      PORT: "9103"
+      CONSUMER_GROUP: lab53-consumers
+      CONSUMER_MODE: "${CONSUMER_MODE:-idempotent-consumer}"
+      REPLAY_MODE: "${REPLAY_MODE:-off}"
+      INSTANCE: consumer-3
+      ENABLE_LAG_SAMPLER: "false"
+    ports:
+      - "${LAB_CONSUMER3_PORT:-9123}:9103"
+
+  # ----------------------------------------------------------------
+  # Observability
+  # ----------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab53-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab53_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - producer
+      - outbox-relay
+      - consumer-1
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab53-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab53_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab53_pg_data:
+  lab53_redpanda_data:
+  lab53_prom_data:
+  lab53_grafana_data:

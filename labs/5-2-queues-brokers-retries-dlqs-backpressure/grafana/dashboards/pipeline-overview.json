@@ -1,0 +1,144 @@
+{
+  "uid": "pipeline-overview",
+  "title": "Pipeline Overview",
+  "tags": ["hlsa2", "lab5-2"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Consumer lag (count AND time - the pair throughput-only reports hide)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Consumer lag - count (messages waiting)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "lab52_consumer_lag_count", "legendFormat": "lag_count", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Consumer lag - time (age of oldest unprocessed, s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "max(lab52_oldest_unprocessed_age_seconds)", "legendFormat": "oldest_age", "refId": "A" },
+        { "expr": "lab52_oldest_unprocessed_age_seconds", "legendFormat": "{{consumer}}", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Throughput + processing latency",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Per-consumer throughput (acked/s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "lab52:acked:rate1m", "legendFormat": "{{consumer}}", "refId": "A" },
+        { "expr": "lab52:acked:cluster:rate1m", "legendFormat": "cluster", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Processing latency p50 / p99 (s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "lab52:processing:p50", "legendFormat": "p50", "refId": "A" },
+        { "expr": "lab52:processing:p99", "legendFormat": "p99", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Retries, DLQ, and producer errors",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Retry rate (retries/s) and DLQ rate (msgs/s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        { "expr": "lab52:retries:rate1m", "legendFormat": "retries/s", "refId": "A" },
+        { "expr": "lab52:dlq:rate1m", "legendFormat": "dlq/s", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Producer error rate (rejected/nack = backpressure propagating)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        { "expr": "lab52:producer_errors:rate1m", "legendFormat": "{{reason}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Produced mix + active controls",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Produced rate by message type (msgs/s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "lab52:produced:rate1m", "legendFormat": "{{type}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Active consumer mode (1 = live)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "targets": [
+        { "expr": "lab52_consumer_mode == 1", "legendFormat": "{{consumer}}/{{mode}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Producer backpressure honored (1 = yes)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 36 },
+      "targets": [
+        { "expr": "lab52_producer_backpressure_enabled", "legendFormat": "backpressure_enabled", "refId": "A" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "consumer_capacity_rps": 300,
+  "baseline": {
+    "rate_rps": 240,
+    "duration_s": 300,
+    "warmup_s": 30,
+    "note": "producer rate ~80% of aggregate consumer capacity so lag stays bounded"
+  },
+  "poison": {
+    "rate_rps": 240,
+    "duration_s": 180,
+    "poison_count": 1
+  },
+  "faults": {
+    "rate_rps": 240,
+    "duration_s": 300,
+    "transient_rate": 0.10,
+    "permanent_rate": 0.02
+  },
+  "backpressure": {
+    "rate_multiplier": 2.0,
+    "duration_s": 600,
+    "note": "producer drives 2x aggregate consumer capacity, sustained"
+  }
+}

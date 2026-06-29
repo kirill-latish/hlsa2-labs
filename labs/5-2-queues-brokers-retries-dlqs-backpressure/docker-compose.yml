@@ -1,0 +1,216 @@
+name: hlsa2-lab52
+
+# Shared service env. RabbitMQ is the primary broker for retry/DLQ
+# semantics; Redpanda is present alongside for broker-family
+# comparison. Postgres is the simulated downstream the consumer writes
+# to. The queue bound (QUEUE_MAX_LEN) is what lets the broker exert
+# backpressure on the producer under sustained overload.
+x-svc-env: &svc-env
+  LOG_LEVEL: info
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+  RABBITMQ_MGMT_URL: http://rabbitmq:15672
+  RABBITMQ_MGMT_USER: guest
+  RABBITMQ_MGMT_PASS: guest
+  REDPANDA_BROKERS: redpanda:9092
+  DATABASE_URL: postgres://lab52:lab52@postgres:5432/lab52?sslmode=disable
+  QUEUE_MAX_LEN: "${LAB_QUEUE_MAX_LEN:-50000}"
+
+services:
+  # --- Brokers -------------------------------------------------------
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: lab52-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "${LAB_RABBITMQ_PORT:-5672}:5672"
+      - "${LAB_RABBITMQ_MGMT_PORT:-15672}:15672"
+    volumes:
+      - lab52_rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.10
+    container_name: lab52-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --memory=512M
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+      - --rpc-addr=0.0.0.0:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "${LAB_REDPANDA_KAFKA_PORT:-9092}:9092"
+      - "${LAB_REDPANDA_ADMIN_PORT:-9644}:9644"
+    volumes:
+      - lab52_redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health -X admin.hosts=localhost:9644 | grep -E 'Healthy:.*true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  # --- Downstream ----------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: lab52-postgres
+    environment:
+      POSTGRES_USER: lab52
+      POSTGRES_PASSWORD: lab52
+      POSTGRES_DB: lab52
+    ports:
+      - "${LAB_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - lab52_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab52 -d lab52"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # --- Application services ------------------------------------------
+
+  producer:
+    build:
+      context: .
+      dockerfile: cmd/producer/Dockerfile
+    container_name: lab52-producer
+    environment:
+      <<: *svc-env
+      PORT: "8080"
+      BROKER: "${LAB_BROKER:-rabbitmq}"
+    ports:
+      - "${LAB_PRODUCER_PORT:-8080}:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  consumer-1: &consumer
+    build:
+      context: .
+      dockerfile: cmd/consumer/Dockerfile
+    container_name: lab52-consumer-1
+    environment:
+      <<: *svc-env
+      PORT: "8081"
+      CONSUMER_ID: consumer-1
+      CONSUMER_MODE: "${LAB_CONSUMER_MODE:-unbounded-retry}"
+      MAX_RETRIES: "${LAB_MAX_RETRIES:-5}"
+    ports:
+      - "${LAB_CONSUMER1_PORT:-8101}:8081"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  consumer-2:
+    <<: *consumer
+    container_name: lab52-consumer-2
+    environment:
+      <<: *svc-env
+      PORT: "8081"
+      CONSUMER_ID: consumer-2
+      CONSUMER_MODE: "${LAB_CONSUMER_MODE:-unbounded-retry}"
+      MAX_RETRIES: "${LAB_MAX_RETRIES:-5}"
+    ports:
+      - "${LAB_CONSUMER2_PORT:-8102}:8081"
+
+  consumer-3:
+    <<: *consumer
+    container_name: lab52-consumer-3
+    environment:
+      <<: *svc-env
+      PORT: "8081"
+      CONSUMER_ID: consumer-3
+      CONSUMER_MODE: "${LAB_CONSUMER_MODE:-unbounded-retry}"
+      MAX_RETRIES: "${LAB_MAX_RETRIES:-5}"
+    ports:
+      - "${LAB_CONSUMER3_PORT:-8103}:8081"
+
+  loadgen:
+    build:
+      context: .
+      dockerfile: cmd/loadgen/Dockerfile
+    container_name: lab52-loadgen
+    environment:
+      <<: *svc-env
+      PORT: "8090"
+      PRODUCER_URL: http://producer:8080
+    ports:
+      - "${LAB_LOADGEN_PORT:-8090}:8090"
+    depends_on:
+      producer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  # --- Observability -------------------------------------------------
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab52-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab52_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - producer
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab52-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab52_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab52_rabbitmq_data:
+  lab52_redpanda_data:
+  lab52_postgres_data:
+  lab52_prom_data:
+  lab52_grafana_data:

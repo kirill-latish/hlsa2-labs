@@ -1,0 +1,75 @@
+groups:
+  - name: lab51-cache
+    interval: 5s
+    rules:
+      # Hit / miss / source-fetch rates.
+      - record: lab51:cache:hits:rate1m
+        expr: sum(rate(lab51_cache_requests_total{outcome=~"hit|local_hit|stale_hit"}[1m]))
+      - record: lab51:cache:reads:rate1m
+        expr: sum(rate(lab51_cache_requests_total[1m]))
+      - record: lab51:cache:misses:rate1m
+        expr: sum(rate(lab51_cache_misses_total[1m]))
+      - record: lab51:cache:source_fetches:rate1m
+        expr: sum(rate(lab51_cache_source_fetches_total[1m]))
+      # Hit ratio (all hit flavours over all reads).
+      - record: lab51:cache:hit_ratio
+        expr: |
+          lab51:cache:hits:rate1m
+          / clamp_min(lab51:cache:reads:rate1m, 1e-9)
+      # Fan-in ratio at the cache layer: source fetches per miss. With
+      # singleflight/xfetch/swr this collapses below 1; the analyzer
+      # additionally reports fan-in per logical expiry for stampedes.
+      - record: lab51:cache:fan_in:rate1m
+        expr: |
+          lab51:cache:source_fetches:rate1m
+          / clamp_min(lab51:cache:misses:rate1m, 1e-9)
+
+  - name: lab51-shards
+    interval: 5s
+    rules:
+      # Per-node Redis ops/sec - the hot-key imbalance signal.
+      - record: lab51:redis:ops:rate1m
+        expr: sum by (node) (rate(lab51_redis_ops_total[1m]))
+      - record: lab51:redis:evictions:rate1m
+        expr: sum by (scope) (rate(lab51_cache_evictions_total[1m]))
+
+  - name: lab51-latency
+    interval: 5s
+    rules:
+      - record: lab51:read:p50:1m
+        expr: histogram_quantile(0.50, sum by (le) (rate(lab51_cache_read_duration_seconds_bucket[1m])))
+      - record: lab51:read:p99:1m
+        expr: histogram_quantile(0.99, sum by (le) (rate(lab51_cache_read_duration_seconds_bucket[1m])))
+
+  - name: lab51-loadgen
+    interval: 5s
+    rules:
+      - record: lab51:offered:rate1m
+        expr: sum by (label) (rate(lab51_loadgen_offered_total[1m]))
+      - record: lab51:served:rate1m
+        expr: sum by (label) (rate(lab51_loadgen_served_total[1m]))
+      # Staleness rate: stale samples over all samples.
+      - record: lab51:staleness:rate1m
+        expr: |
+          sum(rate(lab51_staleness_samples_total{result="stale"}[1m]))
+          / clamp_min(sum(rate(lab51_staleness_samples_total[1m])), 1e-9)
+
+  - name: lab51-alerts
+    interval: 30s
+    rules:
+      - alert: CacheStampedeFanIn
+        expr: lab51:cache:fan_in:rate1m > 5
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Cache fan-in {{ printf \"%.1f\" $value }} source-fetches per miss (stampede). Enable jitter + a coalescing mode."
+          description: "Inspect docs/img/ and apply make apply-fix CANDIDATE=singleflight."
+      - alert: HotShardImbalance
+        expr: |
+          max(lab51:redis:ops:rate1m) > 2 * (sum(lab51:redis:ops:rate1m) / 3)
+        for: 2m
+        labels:
+          severity: warn
+        annotations:
+          summary: "One Redis shard is taking >2x the average ops/sec (hot key). Apply local-LRU."

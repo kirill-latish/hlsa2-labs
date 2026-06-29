@@ -1,0 +1,31 @@
+{
+  "baseline": {
+    "dist": "zipf",
+    "zipf_s": 1.07,
+    "keyspace_size": 10000,
+    "rate_rps": 2000,
+    "duration_s": 300,
+    "runs": 3
+  },
+  "stampede": {
+    "hot_key": "stampede-hot",
+    "ttl_s": 30,
+    "hot_rate_rps": 5000,
+    "duration_s": 180
+  },
+  "hot_key": {
+    "key": "celebrity-1",
+    "weight": 0.4,
+    "dist": "zipf",
+    "rate_rps": 2000,
+    "duration_s": 180,
+    "local_lru": {"size": 1000, "ttl_s": 5}
+  },
+  "staleness": {
+    "stale_keyset": 50,
+    "writers": 4,
+    "rate_rps": 500,
+    "duration_s": 300,
+    "strategies": ["ttl-only", "explicit-invalidate"]
+  }
+}

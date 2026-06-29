@@ -1,0 +1,75 @@
+groups:
+  - name: lab61-edge-latency
+    interval: 5s
+    rules:
+      # The headline number: pure edge overhead, separated from backend
+      # processing time.
+      - record: lab61:edge_overhead:p50
+        expr: histogram_quantile(0.50, sum by (le) (rate(lab61_edge_overhead_seconds_bucket[1m])))
+      - record: lab61:edge_overhead:p99
+        expr: histogram_quantile(0.99, sum by (le) (rate(lab61_edge_overhead_seconds_bucket[1m])))
+      - record: lab61:edge_total:p50
+        expr: histogram_quantile(0.50, sum by (le) (rate(lab61_edge_request_duration_seconds_bucket[1m])))
+      - record: lab61:edge_total:p99
+        expr: histogram_quantile(0.99, sum by (le) (rate(lab61_edge_request_duration_seconds_bucket[1m])))
+
+  - name: lab61-distribution
+    interval: 5s
+    rules:
+      - record: lab61:backend_requests:rate1m
+        expr: sum by (backend) (rate(lab61_edge_backend_requests_total[1m]))
+      # max-vs-mean skew across backends (the partitioning skew metric
+      # applied to the edge).
+      - record: lab61:backend_requests:max_vs_mean
+        expr: |
+          max(lab61:backend_requests:rate1m)
+          / clamp_min(avg(lab61:backend_requests:rate1m), 1e-9)
+
+  - name: lab61-health
+    interval: 5s
+    rules:
+      - record: lab61:backends_up:count
+        expr: sum(lab61_edge_backend_up)
+      - record: lab61:healthcheck_fail:rate1m
+        expr: sum by (backend, depth) (rate(lab61_edge_healthcheck_fail_total[1m]))
+
+  - name: lab61-5xx
+    interval: 5s
+    rules:
+      - record: lab61:edge_5xx:rate1m
+        expr: sum by (code) (rate(lab61_edge_5xx_total[1m]))
+
+  - name: lab61-loadgen
+    interval: 5s
+    rules:
+      - record: lab61:offered:rate1m
+        expr: sum by (label) (rate(lab61_loadgen_offered_total[1m]))
+      - record: lab61:served:rate1m
+        expr: sum by (label) (rate(lab61_loadgen_served_total[1m]))
+
+  - name: lab61-alerts
+    interval: 30s
+    rules:
+      - alert: NoHealthyBackends
+        expr: lab61:backends_up:count < 1
+        for: 30s
+        labels:
+          severity: page
+        annotations:
+          summary: "Edge has zero healthy backends - full 503 outage."
+          description: "Check whether a deep health check is cascading on a shared dependency (see runbooks/healthcheck-cascade-incident.md)."
+      - alert: EdgeOverheadHigh
+        expr: lab61:edge_overhead:p99 > 0.01
+        for: 5m
+        labels:
+          severity: warn
+        annotations:
+          summary: "Edge p99 overhead {{ printf \"%.4f\" $value }}s exceeds 10ms for 5m."
+          description: "The edge tier itself is adding measurable latency - inspect docs/img/ baseline screenshot and the overhead panel."
+      - alert: Edge5xxElevated
+        expr: sum(lab61:edge_5xx:rate1m) > 1
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Edge 5xx rate elevated. Read the code as a layer signal (502=connectivity, 503=capacity/health, 504=backend latency)."

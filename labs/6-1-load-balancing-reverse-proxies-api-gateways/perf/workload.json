@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "rate_rps": 200,
+    "duration_s": 300,
+    "warmup_s": 30,
+    "slow_ratio": 0.2,
+    "concurrency_ceiling": 4096
+  },
+  "distribution": {
+    "rate_rps": 200,
+    "duration_s": 180,
+    "slow_ratio": 0.3,
+    "note": "Uneven request cost: ~30% slow requests so round-robin skews load and least-conn rebalances."
+  },
+  "failover": {
+    "rate_rps": 150,
+    "duration_s": 90,
+    "slow_ratio": 0.1,
+    "inject_after_s": 15
+  },
+  "healthcheck": {
+    "rate_rps": 150,
+    "duration_s": 30,
+    "slow_ratio": 0.1,
+    "hiccup_after_s": 8
+  },
+  "fivexx": {
+    "rate_rps": 100,
+    "slow_ratio": 0.1,
+    "scenario_seconds": 12
+  }
+}

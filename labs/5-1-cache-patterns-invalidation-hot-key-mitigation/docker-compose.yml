@@ -1,0 +1,157 @@
+name: hlsa2-lab51
+
+# Centralised env shared by the Go services. The app shards keys
+# client-side across the three standalone Redis nodes (see
+# internal/shard) and reads through to the Postgres system of record.
+x-svc-env: &svc-env
+  LOG_LEVEL: info
+
+services:
+  # --- System of record ----------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: lab51-postgres
+    environment:
+      POSTGRES_USER: hlsa
+      POSTGRES_PASSWORD: hlsa
+      POSTGRES_DB: hlsa
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - lab51_pg_data:/var/lib/postgresql/data
+    ports:
+      - "${LAB_POSTGRES_PORT:-15432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hlsa -d hlsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # --- Sharded cache (3 standalone nodes, client-side sharded) -------
+  redis-1:
+    image: redis:7-alpine
+    container_name: lab51-redis-1
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "${LAB_REDIS_1_PORT:-16391}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-2:
+    image: redis:7-alpine
+    container_name: lab51-redis-2
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "${LAB_REDIS_2_PORT:-16392}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-3:
+    image: redis:7-alpine
+    container_name: lab51-redis-3
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "${LAB_REDIS_3_PORT:-16393}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  # --- Application under test ----------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: cmd/app/Dockerfile
+    container_name: lab51-app
+    environment:
+      <<: *svc-env
+      PORT: "8080"
+      POSTGRES_DSN: postgres://hlsa:hlsa@postgres:5432/hlsa?sslmode=disable
+      REDIS_NODES: redis-1=redis-1:6379,redis-2=redis-2:6379,redis-3=redis-3:6379
+      CACHE_TTL_SECONDS: "60"
+      SOURCE_LATENCY_MS: "30"
+      SOURCE_JITTER_MS: "20"
+      LOCAL_LRU_SIZE: "1000"
+      WARM_COUNT: "2000"
+    ports:
+      - "${LAB_APP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-1:
+        condition: service_healthy
+      redis-2:
+        condition: service_healthy
+      redis-3:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  # --- Load driver ---------------------------------------------------
+  loadgen:
+    build:
+      context: .
+      dockerfile: cmd/loadgen/Dockerfile
+    container_name: lab51-loadgen
+    environment:
+      <<: *svc-env
+      PORT: "8090"
+      APP_URL: http://app:8080
+      KEYSPACE_SIZE: "10000"
+    ports:
+      - "${LAB_LOADGEN_PORT:-8090}:8090"
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  # --- Observability -------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab51-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab51_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - app
+      - loadgen
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab51-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab51_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab51_pg_data:
+  lab51_prom_data:
+  lab51_grafana_data:

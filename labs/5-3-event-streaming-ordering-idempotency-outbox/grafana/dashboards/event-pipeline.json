@@ -1,0 +1,141 @@
+{
+  "uid": "event-pipeline",
+  "title": "Event Pipeline",
+  "tags": ["hlsa2", "lab5-3"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Delivery semantics (duplicate rate + ordering)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Duplicate rate (suppressed / consumed)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "lab53:duplicate_rate:1m", "legendFormat": "duplicate_rate", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Ordering-violation rate (violations / consumed)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "lab53:ordering_violation_rate:1m", "legendFormat": "violation_rate", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Consumer lag (count + time)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Consumer lag count (unprocessed backlog)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "lab53:consumer_lag_count", "legendFormat": "lag_count", "refId": "A" }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Consumer lag age (projection staleness, s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "lab53:consumer_lag_age_seconds", "legendFormat": "lag_age", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Outbox backlog + offset/pipeline health",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Outbox backlog (committed-but-unpublished rows)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        { "expr": "lab53:outbox_backlog", "legendFormat": "backlog", "refId": "A" }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Offset health: produced vs consumed (eps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        { "expr": "lab53:events_produced:rate1m", "legendFormat": "produced", "refId": "A" },
+        { "expr": "lab53:events_consumed:rate1m", "legendFormat": "consumed", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Effects + raw counters",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "External side-effects rate (eps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "lab53:side_effects:rate1m", "legendFormat": "side_effects", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Active consumer mode (1=on)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "targets": [
+        { "expr": "lab53_consumer_mode_active", "legendFormat": "{{instance}} {{setting}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Cumulative side effects vs unique events consumed",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 36 },
+      "targets": [
+        { "expr": "sum(lab53_side_effects_total)", "legendFormat": "side_effects_total", "refId": "A" },
+        { "expr": "sum(lab53_events_consumed_total)", "legendFormat": "events_consumed_total", "refId": "B" },
+        { "expr": "sum(lab53_duplicate_suppressed_total)", "legendFormat": "duplicate_suppressed_total", "refId": "C" }
+      ]
+    }
+  ]
+}

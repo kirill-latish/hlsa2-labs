@@ -1,0 +1,168 @@
+{
+  "uid": "cache-overview",
+  "title": "Cache Overview",
+  "tags": ["hlsa2", "lab5-1"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Cache effectiveness (baseline screenshots come from here)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Hit ratio",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "lab51:cache:hit_ratio", "legendFormat": "hit_ratio", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.8 },
+              { "color": "green", "value": 0.9 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Read latency p50 / p99 (s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "lab51:read:p50:1m", "legendFormat": "p50", "refId": "A" },
+        { "expr": "lab51:read:p99:1m", "legendFormat": "p99", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Stampede signals (fan-in + source fetches)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Fan-in ratio (source-fetches / misses)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "lab51:cache:fan_in:rate1m", "legendFormat": "fan_in", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Source-fetch rate vs miss rate (rps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "lab51:cache:source_fetches:rate1m", "legendFormat": "source_fetches", "refId": "A" },
+        { "expr": "lab51:cache:misses:rate1m", "legendFormat": "misses", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Per-shard load (hot-key imbalance) + evictions",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Per-node Redis ops/sec",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        { "expr": "lab51:redis:ops:rate1m", "legendFormat": "{{node}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Eviction rate (local LRU)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        { "expr": "lab51:redis:evictions:rate1m", "legendFormat": "{{scope}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Invalidation staleness + offered/served",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Staleness rate (stale / total samples)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "lab51:staleness:rate1m", "legendFormat": "stale_fraction", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1 } }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Offered vs served rate (rps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "targets": [
+        { "expr": "lab51:offered:rate1m", "legendFormat": "offered {{label}}", "refId": "A" },
+        { "expr": "lab51:served:rate1m", "legendFormat": "served {{label}}", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Max staleness (s)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 36 },
+      "targets": [
+        { "expr": "max(lab51_staleness_max_seconds) by (strategy)", "legendFormat": "{{strategy}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Active cache config",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 36 },
+      "targets": [
+        { "expr": "lab51_config_info", "legendFormat": "coalescing={{coalescing}} inval={{invalidation}} local_lru={{local_lru}}", "refId": "A" }
+      ]
+    }
+  ]
+}

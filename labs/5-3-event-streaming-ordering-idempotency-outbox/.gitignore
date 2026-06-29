@@ -1,0 +1,21 @@
+.env
+
+# Per-run artefacts that are noise; keep run dirs themselves.
+perf/results/**/*.log
+
+# Generated screenshots; keep the placeholder for the directory.
+docs/img/*.png
+docs/img/*.jpg
+!docs/img/.gitkeep
+
+# Filled-in template (students copy this from the .template version).
+docs/review.md
+
+# Go scratch space.
+bin/
+
+.DS_Store
+
+# Python bytecode from analyze-*.py imports.
+**/__pycache__/
+*.pyc

@@ -1,0 +1,59 @@
+groups:
+  - name: lab52-throughput
+    interval: 5s
+    rules:
+      # Per-consumer throughput (acked/s).
+      - record: lab52:acked:rate1m
+        expr: sum by (consumer) (rate(lab52_messages_acked_total[1m]))
+      # Cluster throughput (acked/s across the fleet).
+      - record: lab52:acked:cluster:rate1m
+        expr: sum(rate(lab52_messages_acked_total[1m]))
+      # Produced rate, by message type.
+      - record: lab52:produced:rate1m
+        expr: sum by (type) (rate(lab52_messages_produced_total[1m]))
+
+  - name: lab52-retries-dlq
+    interval: 5s
+    rules:
+      - record: lab52:retries:rate1m
+        expr: sum(rate(lab52_retries_total[1m]))
+      - record: lab52:dlq:rate1m
+        expr: sum(rate(lab52_dlq_total[1m]))
+      - record: lab52:producer_errors:rate1m
+        expr: sum by (reason) (rate(lab52_producer_errors_total[1m]))
+
+  - name: lab52-latency
+    interval: 5s
+    rules:
+      - record: lab52:processing:p50
+        expr: histogram_quantile(0.50, sum by (le) (rate(lab52_processing_duration_seconds_bucket[1m])))
+      - record: lab52:processing:p99
+        expr: histogram_quantile(0.99, sum by (le) (rate(lab52_processing_duration_seconds_bucket[1m])))
+
+  - name: lab52-alerts
+    interval: 30s
+    rules:
+      - alert: ConsumerLagGrowing
+        expr: lab52_consumer_lag_count > 5000
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Consumer lag count {{ printf \"%.0f\" $value }} > 5000 for 2m"
+          description: "Lag is growing - producer may be outrunning the consumer fleet. See runbooks/backpressure-incident.md and docs/img/backpressure-lag.png."
+      - alert: PoisonRetryStorm
+        expr: lab52:retries:rate1m > 100 and lab52:acked:cluster:rate1m < 10
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Retry rate {{ printf \"%.0f\" $value }}/s with near-zero throughput"
+          description: "A poison message is likely wedging the consumer fleet under unbounded retries. See runbooks/poison-message-incident.md."
+      - alert: DLQRateNonZero
+        expr: lab52:dlq:rate1m > 0
+        for: 1m
+        labels:
+          severity: warn
+        annotations:
+          summary: "Messages dead-lettering at {{ printf \"%.2f\" $value }}/s"
+          description: "Inspect the DLQ; classify whether these are permanent failures (expected) or transient that exhausted retries."

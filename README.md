@@ -19,6 +19,11 @@ you benchmark, improve, and document.
 | 3-3 | [labs/3-3-failure-domains-blast-radius-graceful-degradation](labs/3-3-failure-domains-blast-radius-graceful-degradation/) | Failure Domains, Blast Radius, and Graceful Degradation |
 | 4-2 | [labs/4-2-replication-consistency-distributed-transactions](labs/4-2-replication-consistency-distributed-transactions/) | Replication, Consistency, and Distributed Transactions |
 | 4-3 | [labs/4-3-nosql-sharding-polyglot-persistence-cdc](labs/4-3-nosql-sharding-polyglot-persistence-cdc/) | NoSQL, Sharding, Polyglot Persistence, and CDC |
+| 5-1 | [labs/5-1-cache-patterns-invalidation-hot-key-mitigation](labs/5-1-cache-patterns-invalidation-hot-key-mitigation/) | Cache Patterns, Invalidation, and Hot-Key Mitigation |
+| 5-2 | [labs/5-2-queues-brokers-retries-dlqs-backpressure](labs/5-2-queues-brokers-retries-dlqs-backpressure/) | Queues, Brokers, Retries, DLQs, and Backpressure |
+| 5-3 | [labs/5-3-event-streaming-ordering-idempotency-outbox](labs/5-3-event-streaming-ordering-idempotency-outbox/) | Event Streaming: Ordering, Idempotency, and the Outbox Pattern |
+| 6-1 | [labs/6-1-load-balancing-reverse-proxies-api-gateways](labs/6-1-load-balancing-reverse-proxies-api-gateways/) | Load Balancing, Reverse Proxies, and API Gateways |
+| 6-2 | [labs/6-2-cdn-strategy-edge-delivery](labs/6-2-cdn-strategy-edge-delivery/) | CDN Strategy and Edge Delivery |
 
 ## Getting Started
 
@@ -147,6 +152,67 @@ hlsa2-labs/
       runbooks/      ← hot-partition incident + CDC-stuck incident
       docs/          ← review template + architecture diagram + freshness-policy template + screenshots (committed by you)
       scripts/       ← bench drivers + analyze-* / compare-* Python scripts
+    5-1-cache-patterns-invalidation-hot-key-mitigation/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← app + 3 Redis shards (client-side sharding) + Postgres + loadgen + Prometheus + Grafana
+      Makefile       ← `make up`, `make seed`, `make cluster-status`, `make bench-baseline`, `make inject-stampede`, `make apply-fix`, `make inject-hot-key`, `make bench-staleness`, `make check-submission`
+      cmd/           ← Go binaries: app (read-through cache), loadgen
+      internal/      ← shared Go packages (cache, sharding, metrics)
+      prometheus/    ← scrape config + cache recording rules
+      grafana/       ← provisioned Cache Overview dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← cache-stampede + hot-key incident
+      docs/          ← review + staleness-policy templates, screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* Python scripts
+    5-2-queues-brokers-retries-dlqs-backpressure/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← producer + 3 consumers + RabbitMQ + Redpanda + Postgres + loadgen + Prometheus + Grafana
+      Makefile       ← `make up`, `make seed`, `make brokers-status`, `make bench-baseline`, `make inject-poison`, `make apply-fix`, `make bench-faults`, `make bench-backpressure`, `make check-submission`
+      cmd/           ← Go binaries: producer, consumer, loadgen
+      internal/      ← shared Go packages (pipeline/topology, metrics)
+      prometheus/    ← scrape config + pipeline recording rules
+      grafana/       ← provisioned Pipeline Overview dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← poison-message + backpressure incident
+      docs/          ← review template + screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* Python scripts
+    5-3-event-streaming-ordering-idempotency-outbox/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← producer + consumer group + outbox-relay + Redpanda + Postgres + Prometheus + Grafana
+      Makefile       ← `make up`, `make seed`, `make topic-status`, `make relay-status`, `make bench-baseline`, `make inject-duplicates`, `make verify-exactly-once`, `make bench-ordering`, `make replay-rebuild`, `make check-submission`
+      cmd/           ← Go binaries: producer, consumer, outbox-relay, loadgen
+      internal/      ← shared Go packages (events, outbox, idempotency, metrics)
+      postgres/      ← orders + events_outbox + processed_ids + projection + side_effects
+      prometheus/    ← scrape config + event-pipeline recording rules
+      grafana/       ← provisioned Event Pipeline dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← duplicate-storm + ordering-violation incident
+      docs/          ← review template + screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* / verify-* Python scripts
+    6-1-load-balancing-reverse-proxies-api-gateways/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← edge-proxy + 4 backends + Postgres + loadgen + Prometheus + Grafana
+      Makefile       ← `make up`, `make seed`, `make edge-status`, `make bench-baseline`, `make bench-distribution`, `make inject-backend-failure`, `make apply-fix`, `make analyze-healthcheck`, `make inject-5xx-scenarios`, `make check-submission`
+      cmd/           ← Go binaries: edge-proxy (LB algos + health-check depth), backend, loadgen
+      internal/      ← shared Go packages (balancer, health, metrics)
+      prometheus/    ← scrape config + edge recording rules
+      grafana/       ← provisioned Edge Overview dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← failover + health-check incident
+      docs/          ← review template + screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* Python scripts
+    6-2-cdn-strategy-edge-delivery/
+      README.md      ← lab setup, stack overview, experiment workflow
+      docker-compose.yml ← 3 PoPs + shield + origin + loadgen + Prometheus + Grafana
+      Makefile       ← `make up`, `make seed`, `make edge-status`, `make bench-baseline`, `make bench-cachekey`, `make apply-fix`, `make probe-cross-user`, `make expire-popular-object`, `make inject-origin-outage`, `make check-submission`
+      cmd/           ← Go binaries: pop (edge cache), shield (origin shield), origin, loadgen
+      internal/      ← shared Go packages (cachekey, edge, metrics)
+      prometheus/    ← scrape config + edge-delivery recording rules
+      grafana/       ← provisioned Edge Delivery dashboard
+      perf/          ← workload model + results (committed by you)
+      runbooks/      ← origin-outage + cache-leak incident
+      docs/          ← review template + screenshots (committed by you)
+      scripts/       ← bench drivers + analyze-* Python scripts
 ```
 
 ## License

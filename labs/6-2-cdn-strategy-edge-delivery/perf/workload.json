@@ -1,0 +1,33 @@
+{
+  "baseline": {
+    "rate_rps": 200,
+    "duration": "5m",
+    "request_mix": {
+      "static": 0.60,
+      "page": 0.25,
+      "api": 0.15
+    },
+    "static_split": {
+      "popular_small": 0.85,
+      "big_rare": 0.15
+    },
+    "tracking_param_share": 0.30,
+    "tracking_params": ["utm_source", "fbclid", "gclid"],
+    "notes": "Popular static objects are 2 KiB; big-rare objects are 256 KiB. The size asymmetry is what makes hit-ratio-by-request and hit-ratio-by-bytes diverge."
+  },
+  "cachekey": {
+    "rate_rps": 200,
+    "duration": "3m",
+    "keys": ["full-querystring", "stripped"]
+  },
+  "probe": {
+    "users": 20,
+    "requests": 200,
+    "route": "/account"
+  },
+  "thundering_herd": {
+    "popular_object": "s0",
+    "burst_per_pop": 40,
+    "pops": 3
+  }
+}

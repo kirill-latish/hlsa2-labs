@@ -1,0 +1,196 @@
+name: hlsa2-lab62
+
+# Centralised env shared across the caching-proxy containers. Each PoP
+# and the shield run the SAME binary (cmd/cache-proxy); ROLE + NODE pick
+# the behaviour and the upstream wiring.
+x-proxy-env: &proxy-env
+  ORIGIN_URL: http://origin:8088
+  SHIELD_URL: http://shield:8080
+  LOG_LEVEL: info
+
+services:
+  origin:
+    build:
+      context: .
+      dockerfile: cmd/origin/Dockerfile
+    container_name: lab62-origin
+    environment:
+      PORT: "8088"
+      BASE_LATENCY_MS: "40"
+      JITTER_MS: "20"
+    ports:
+      - "${LAB_ORIGIN_PORT:-8088}:8088"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8088/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  shield:
+    build:
+      context: .
+      dockerfile: cmd/cache-proxy/Dockerfile
+    container_name: lab62-shield
+    environment:
+      <<: *proxy-env
+      PORT: "8080"
+      ROLE: shield
+      NODE: shield
+      CACHE_KEY_MODE: stripped-allowlist
+      TTL_SECONDS: "60"
+      REQUEST_COLLAPSING: "true"
+      STALE_IF_ERROR: "false"
+      PERSONALIZED_MODE: private-no-store
+    ports:
+      - "${LAB_SHIELD_PORT:-8086}:8080"
+    depends_on:
+      origin:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  pop-1:
+    build:
+      context: .
+      dockerfile: cmd/cache-proxy/Dockerfile
+    container_name: lab62-pop-1
+    environment:
+      <<: *proxy-env
+      PORT: "8080"
+      ROLE: pop
+      NODE: pop-1
+      CACHE_KEY_MODE: stripped-allowlist
+      ALLOWLIST: "v"
+      TTL_SECONDS: "60"
+      REQUEST_COLLAPSING: "true"
+      STALE_IF_ERROR: "false"
+      PERSONALIZED_MODE: private-no-store
+      SHIELD_ROUTING: "true"
+    ports:
+      - "${LAB_POP1_PORT:-8081}:8080"
+    depends_on:
+      shield:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  pop-2:
+    build:
+      context: .
+      dockerfile: cmd/cache-proxy/Dockerfile
+    container_name: lab62-pop-2
+    environment:
+      <<: *proxy-env
+      PORT: "8080"
+      ROLE: pop
+      NODE: pop-2
+      CACHE_KEY_MODE: stripped-allowlist
+      ALLOWLIST: "v"
+      TTL_SECONDS: "60"
+      REQUEST_COLLAPSING: "true"
+      STALE_IF_ERROR: "false"
+      PERSONALIZED_MODE: private-no-store
+      SHIELD_ROUTING: "true"
+    ports:
+      - "${LAB_POP2_PORT:-8082}:8080"
+    depends_on:
+      shield:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  pop-3:
+    build:
+      context: .
+      dockerfile: cmd/cache-proxy/Dockerfile
+    container_name: lab62-pop-3
+    environment:
+      <<: *proxy-env
+      PORT: "8080"
+      ROLE: pop
+      NODE: pop-3
+      CACHE_KEY_MODE: stripped-allowlist
+      ALLOWLIST: "v"
+      TTL_SECONDS: "60"
+      REQUEST_COLLAPSING: "true"
+      STALE_IF_ERROR: "false"
+      PERSONALIZED_MODE: private-no-store
+      SHIELD_ROUTING: "true"
+    ports:
+      - "${LAB_POP3_PORT:-8083}:8080"
+    depends_on:
+      shield:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  loadgen:
+    build:
+      context: .
+      dockerfile: cmd/loadgen/Dockerfile
+    container_name: lab62-loadgen
+    environment:
+      PORT: "8090"
+      POP_URLS: http://pop-1:8080,http://pop-2:8080,http://pop-3:8080
+    ports:
+      - "${LAB_LOADGEN_PORT:-8090}:8090"
+    depends_on:
+      pop-1:
+        condition: service_healthy
+      pop-2:
+        condition: service_healthy
+      pop-3:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lab62-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - lab62_prom_data:/prometheus
+    ports:
+      - "${LAB_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - pop-1
+      - origin
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: lab62-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - lab62_grafana_data:/var/lib/grafana
+    ports:
+      - "${LAB_GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  lab62_prom_data:
+  lab62_grafana_data:

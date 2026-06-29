@@ -1,0 +1,169 @@
+{
+  "uid": "edge-delivery",
+  "title": "Edge Delivery",
+  "tags": ["hlsa2", "lab6-2"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Cache effectiveness (the by-request vs by-bytes pair)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Hit ratio by request AND by bytes",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "lab62:hit_ratio_request:1m", "legendFormat": "by request", "refId": "A" },
+        { "expr": "lab62:hit_ratio_bytes:1m", "legendFormat": "by bytes", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "green", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Origin offload by request (1 = origin spared)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "lab62:offload_request:1m", "legendFormat": "offload", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Cache-status distribution + origin request rate",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Cache-status distribution (HIT/MISS/EXPIRED/STALE/BYPASS)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        { "expr": "lab62:cache:status:rate1m", "legendFormat": "{{status}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Origin request rate (the thundering-herd / offload signal)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        { "expr": "lab62:origin:requests:rate1m", "legendFormat": "origin total", "refId": "A" },
+        { "expr": "lab62:origin:requests:byclass:rate1m", "legendFormat": "{{class}}", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Cache-entry cardinality + per-node hit status",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Cache-entry cardinality per node (fragmentation blows this up)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        { "expr": "lab62:cache:entries:bynode", "legendFormat": "{{node}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Cache responses by node + status",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        { "expr": "sum by (node, status) (rate(lab62_cache_responses_total{role=\"pop\"}[1m]))", "legendFormat": "{{node}}/{{status}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Security + load driver",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "Cross-user content leaks (cumulative)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "lab62_cross_user_leak_total", "legendFormat": "leaks", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Loadgen offered vs served (rps)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 16, "x": 8, "y": 28 },
+      "targets": [
+        { "expr": "sum(rate(lab62_loadgen_offered_total[1m]))", "legendFormat": "offered", "refId": "A" },
+        { "expr": "sum(rate(lab62_loadgen_served_total[1m]))", "legendFormat": "served", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Active proxy modes (1 = active)",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 34 },
+      "targets": [
+        { "expr": "lab62_proxy_mode == 1", "legendFormat": "{{node}} {{kind}}={{value}}", "refId": "A" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+groups:
+  - name: lab62-cache
+    interval: 5s
+    rules:
+      # Total proxied responses across the edge (all PoPs).
+      - record: lab62:cache:responses:rate1m
+        expr: sum(rate(lab62_cache_responses_total{role="pop"}[1m]))
+      # Hit ratio BY REQUEST: HIT responses / all responses across PoPs.
+      - record: lab62:hit_ratio_request:1m
+        expr: |
+          sum(rate(lab62_cache_responses_total{role="pop",status="HIT"}[1m]))
+          / clamp_min(sum(rate(lab62_cache_responses_total{role="pop"}[1m])), 1e-9)
+      # Hit ratio BY BYTES: edge-sourced bytes / all bytes served by PoPs.
+      - record: lab62:hit_ratio_bytes:1m
+        expr: |
+          sum(rate(lab62_bytes_served_total{source="edge"}[1m]))
+          / clamp_min(sum(rate(lab62_bytes_served_total[1m])), 1e-9)
+      # Cache-status distribution by status (HIT/MISS/EXPIRED/STALE/BYPASS).
+      - record: lab62:cache:status:rate1m
+        expr: sum by (status) (rate(lab62_cache_responses_total{role="pop"}[1m]))
+
+  - name: lab62-origin
+    interval: 5s
+    rules:
+      # Origin request rate (the offload signal: lower is better).
+      - record: lab62:origin:requests:rate1m
+        expr: sum(rate(lab62_origin_requests_total[1m]))
+      - record: lab62:origin:requests:byclass:rate1m
+        expr: sum by (class) (rate(lab62_origin_requests_total[1m]))
+      # Offload BY REQUEST: 1 - origin_requests / edge_responses.
+      - record: lab62:offload_request:1m
+        expr: |
+          1 - (
+            sum(rate(lab62_origin_requests_total[1m]))
+            / clamp_min(sum(rate(lab62_cache_responses_total{role="pop"}[1m])), 1e-9)
+          )
+
+  - name: lab62-cardinality
+    interval: 5s
+    rules:
+      - record: lab62:cache:entries:bynode
+        expr: max by (node) (lab62_cache_entries)
+      - record: lab62:cache:entries:edge
+        expr: sum(lab62_cache_entries{node=~"pop-.*"})
+
+  - name: lab62-alerts
+    interval: 30s
+    rules:
+      - alert: EdgeHitRatioCollapsed
+        expr: lab62:hit_ratio_request:1m < 0.5
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Edge hit ratio {{ printf \"%.2f\" $value }} below 0.5 for 2m"
+          description: "Suspect cache-key fragmentation (tracking params in key) or a BYPASS-causing header. Inspect the cache-status panel and lab62_cache_entries."
+      - alert: BypassSpike
+        expr: |
+          sum(rate(lab62_cache_responses_total{role="pop",status="BYPASS"}[1m]))
+          / clamp_min(sum(rate(lab62_cache_responses_total{role="pop"}[1m])), 1e-9) > 0.5
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "BYPASS rate {{ printf \"%.2f\" $value }} - the edge is caching nothing"
+          description: "A Set-Cookie/no-store/Vary:Cookie header is making content uncacheable. Latency/uptime look fine; offload has collapsed."
+      - alert: CrossUserLeak
+        expr: increase(lab62_cross_user_leak_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: page
+        annotations:
+          summary: "Cross-user content leak detected ({{ printf \"%.0f\" $value }} in 5m)"
+          description: "Personalized content is being served to the wrong user from the shared edge cache. Mark it private/no-store or add identity to the cache key."

@@ -13,7 +13,11 @@ services:
       PAYMENTS_TIMEOUT_S: "2.0"
       SERVICE_NAME: checkout
     ports:
-      - "8080:8080"
+      # Host port is overridable so the lab can coexist with other local
+      # services already bound to 8080. Defaults to 8080 on a clean clone;
+      # set CHECKOUT_PORT in .env to remap. Container port never changes,
+      # so in-cluster URLs (PAYMENTS_URL, prometheus targets) are unaffected.
+      - "${CHECKOUT_PORT:-8080}:8080"
     depends_on:
       payments:
         condition: service_healthy

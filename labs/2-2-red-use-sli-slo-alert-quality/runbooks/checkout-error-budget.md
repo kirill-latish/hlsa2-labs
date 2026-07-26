@@ -59,6 +59,67 @@ not the 5m panel). Common causes for slow burn that fast burn missed:
 - Histogram bucket boundary mismatched with the SLO threshold (latency
   SLI only).
 
+## Pager: `SLOFastBurnLatency`
+
+**Why you were paged.** Both the 1h and the 5m latency burn rates are
+≥ 14.4×. Far more than 0.1% of checkouts are taking longer than 300 ms.
+
+**The trap:** requests are still succeeding. The error-ratio stat panel
+will look green and the status-class panel will show pure 2xx. If you
+triage this like an availability incident you will conclude nothing is
+wrong. Go to the latency panel first.
+
+### Triage in two minutes
+
+1. Open the latency panel on
+   `http://localhost:3000/d/red-overview/red-overview?var-service=checkout`
+   and confirm p95/p99 are above 300 ms and still climbing or flat — not
+   already recovering.
+2. Check `inflight_requests`. If it is climbing, the service is
+   accumulating concurrency and this will become an availability
+   incident when timeouts start firing (`PAYMENTS_TIMEOUT_S` = 2.0s, so
+   checkout starts returning 504 once payments exceeds that).
+3. Check whether the slowness is downstream:
+   `curl -s http://localhost:8081/admin/inject`. A non-zero `latency_ms`
+   means fault injection is still on. Reset with
+   `curl -X POST http://localhost:8081/admin/inject -H 'content-type: application/json' -d '{"fail_ratio": 0.0, "latency_ms": 30, "latency_jitter_ms": 20}'`.
+4. If payments is clean, the latency is being added by checkout itself —
+   check CPU (`docker stats hlsa2-checkout`). A single uvicorn worker
+   saturates at roughly 90 rps.
+
+### Mitigation options
+
+| Option | When to use | Side-effect |
+|--------|-------------|-------------|
+| Reset payments fault injection | Lab path: someone left latency injected | None |
+| Scale checkout workers / replicas | CPU near 100% of a core | Costs capacity; does not help if payments is the slow part |
+| Shed load at the edge | Latency is caused by overload, not a code path | Rejected requests become 4xx/5xx — trades the latency SLO against the availability one, so decide deliberately |
+| Reduce `PAYMENTS_TIMEOUT_S` | Slow payments is holding connections open | Converts slow successes into fast 504s: latency budget stops burning, availability budget starts. Only do this knowingly |
+
+### Stand-down criteria
+
+Resolve when the 5m latency burn rate has been < 1.0 for 5 minutes **and**
+the 1h rate is trending down. Do not stand down on p99 alone — p99 is
+interpolated and can drop while the fraction of requests over 300 ms is
+still elevated.
+
+## Ticket: `SLOSlowBurnLatency`
+
+**Why you got a ticket.** The 6h and 30m latency burn rates are both
+≥ 6×. A persistent tail-latency regression is leaking budget without
+being dramatic enough to page.
+
+Same triage with a wider horizon. Causes that fit this shape:
+
+- A downstream that got quietly slower after its own deploy — payments
+  latency crept from 30 ms to 200 ms and nothing errored.
+- Gradual data growth pushing a query past a threshold.
+- **An instrumentation change, not a real regression.** If someone
+  altered `LATENCY_BUCKETS` in `checkout/main.py` and the `0.3` boundary
+  is gone, the SLI numerator is now interpolated and the measured value
+  will shift even though the service did not. Check git history on the
+  histogram definition before chasing a phantom.
+
 ## Anti-patterns to avoid
 
 - **Don't acknowledge and walk away.** Acknowledging silences the alert

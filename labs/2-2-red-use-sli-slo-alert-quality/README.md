@@ -38,6 +38,11 @@ cd labs/2-2-red-use-sli-slo-alert-quality/
 docker compose up -d
 ```
 
+If host port 8080 is already taken on your machine, set `CHECKOUT_PORT` in
+a `.env` file in this directory (e.g. `CHECKOUT_PORT=18080`) and use that
+port in place of 8080 below. Only the host binding changes; in-cluster
+URLs and Prometheus targets are unaffected.
+
 Wait ~30 seconds for healthchecks to pass, then verify each service:
 
 ```bash
@@ -58,22 +63,49 @@ nominal load), so the panels populate as soon as the stack is healthy.
 ## Running an experiment
 
 ```bash
-bash scripts/run-experiment.sh nominal     # 30-min steady-state baseline
-bash scripts/run-experiment.sh fast-burn   # 12-min, 5% errors
-bash scripts/run-experiment.sh slow-burn   # 90-min, 0.7% errors
+bash scripts/run-experiment.sh nominal       # 30-min steady-state baseline
+bash scripts/run-experiment.sh fast-burn     # 12-min, 5% errors
+bash scripts/run-experiment.sh slow-burn     # 90-min, 0.7% errors
+bash scripts/run-experiment.sh latency-burn  # 15-min, 400ms injected latency
 ```
 
 Each run:
 
 1. Confirms the stack is up.
-2. POSTs the profile's fault-injection payload to
+2. Captures a "before" Prometheus snapshot into the artifact directory.
+3. POSTs the profile's fault-injection payload to
    `http://payments:8081/admin/inject`.
-3. Drives `rps` requests/second against `POST /checkout` for the
+4. Drives `rps` requests/second against `POST /checkout` for the
    profile's `duration_seconds`.
-4. Resets payments to baseline.
-5. Saves `loadgen` stdout and a small meta.json under
+5. Resets payments to baseline.
+6. Captures an "after" snapshot, waits `RANGE_WAIT` seconds (default 300)
+   for alert decay, then captures the range series.
+7. Saves `loadgen` stdout and a small meta.json under
    `artifacts/01-baseline/` (for `nominal`/`smoke`) or
-   `artifacts/02-experiments/` (for `fast-burn`/`slow-burn`).
+   `artifacts/02-experiments/` (for the fault profiles).
+
+**Experiment order matters.** These alerts read `rate()` over windows up
+to 6h, so a run inherits whatever traffic preceded it. Running the clean
+baseline before `slow-burn` dilutes the 6h window enough that the
+slow-burn alert never fires, even though the alert is correct. Use
+`slow-burn → nominal → (1h gap) → fast-burn → latency-burn`, and leave a
+gap of at least the longest window between runs whose windows must not
+overlap. The reasoning is worked out in `docs/review.md` section 3.
+
+### Evidence capture
+
+`scripts/capture-metrics.sh` is what makes the runs auditable after
+Prometheus' 2-day retention rolls over:
+
+```bash
+bash scripts/capture-metrics.sh snapshot artifacts/01-baseline my-tag
+bash scripts/capture-metrics.sh range artifacts/01-baseline my-tag <start> <end>
+bash scripts/capture-metrics.sh cardinality artifacts
+```
+
+TTD/TTR are read from the `ALERTS` metric in the range capture, which
+exists only while an alert is pending or firing — so detect and reset
+times are measured, not inferred from wall-clock guesses.
 
 You can also run a profile directly without the wrapper:
 
@@ -207,10 +239,15 @@ labs/2-2-red-use-sli-slo-alert-quality/
     checkout-error-budget.md
   scripts/
     run-experiment.sh
+    capture-metrics.sh      ← Prometheus evidence capture (snapshot/range/cardinality)
   artifacts/
     01-baseline/            ← nominal/smoke runs land here
-    02-experiments/         ← fast-burn / slow-burn runs land here
+    02-experiments/         ← fault-injection runs land here
+    cardinality.json        ← TSDB series counts for the audit
 ```
+
+Note: `.gitignore` ignores `*.log` globally but re-includes
+`artifacts/**/*.log`, because the experiment logs are deliverables.
 
 ## Submitting
 

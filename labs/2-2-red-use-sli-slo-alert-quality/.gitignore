@@ -4,5 +4,9 @@ __pycache__/
 .venv/
 venv/
 *.log
+# ...but experiment logs under artifacts/ are deliverables and must commit.
+!artifacts/**/*.log
 artifacts/**/tmp/
+# Local-only host port overrides (see docker-compose.yml).
+.env
 .DS_Store

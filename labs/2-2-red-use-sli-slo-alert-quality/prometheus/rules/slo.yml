@@ -1,21 +1,41 @@
 # =====================================================================
-# SLO recording- and alerting-rule template (you complete this file).
+# SLO recording- and alerting-rule definitions for POST /checkout.
 # =====================================================================
 #
-# This is the central deliverable of homework 2-2. The structure below
-# is intentional and mirrors the three layers from the lecture:
+# Three layers, mirroring the lecture structure:
 #
 #   Layer A  short-window SLI ratios               (recording rules)
 #   Layer B  burn rate per window                  (recording rules)
 #   Layer C  multi-window multi-burn-rate alerts   (alerting rules)
 #
-# A worked example is supplied for the AVAILABILITY SLI so you can see
-# the shape of the rules and the labels expected by the Alertmanager
-# routing template. The LATENCY SLI is left blank for you to write.
+# ---------------------------------------------------------------------
+# SLO TARGETS - single source of truth
+# ---------------------------------------------------------------------
+#   availability : 99.9%  -> error budget 0.001  (43m 12s per 30 days)
+#   latency      : 99.9%  of requests served in < 300ms
+#                         -> error budget 0.001  (43m 12s per 30 days)
 #
-# Do NOT change the rule names without also updating the dashboard and
-# the alert annotations: the Grafana panels and runbook URL paths
-# reference these names.
+# Both targets are literal `0.999` below rather than a `slo:...:target`
+# recording rule. That is deliberate: an arithmetic expression joining
+# two label-less recording rules depends on vector matching succeeding,
+# and if a future label ever diverges the join yields an empty vector -
+# which makes the burn-rate rule return no data and the alert silently
+# stop firing. A silent no-op is the worst possible failure mode for an
+# alert, so the constant is repeated rather than indirected. Any change
+# to a target must be applied to all four rules for that SLO plus
+# docs/slo.md.
+#
+# Why 99.9%: the 15-minute steady-state baseline measured 0 errors in
+# 1199 requests and p99 = 98ms with every request under 100ms, i.e. no
+# observed budget consumption at all on either SLI. 99.9% sits below
+# that with deliberate headroom, and it is also the value that separates
+# the two experiment regimes - see docs/slo.md section 4.
+#
+# ---------------------------------------------------------------------
+# Rule naming is load-bearing: grafana/dashboards/red-overview.json
+# queries slo:checkout_availability:burnrate{5m,1h,6h} directly, and the
+# alert annotations reference the runbook path. Do not rename without
+# updating both.
 # =====================================================================
 
 groups:
@@ -23,96 +43,175 @@ groups:
   # =================================================================
   # Layer A - short-window SLI ratios
   # =================================================================
+  # Both SLIs are good_events / valid_events, evaluated over the four
+  # windows the burn-rate alerts consume (5m, 30m, 1h, 6h).
+  #
+  # Note on no-traffic periods: loadgen only exists while an experiment
+  # runs, so between runs both ratios return no data rather than 0. An
+  # absent vector makes every downstream comparison false, so the alerts
+  # go quiet instead of reporting a 100% failure rate. That is the
+  # correct behaviour here (no requests means no user harm) but it also
+  # means these rules cannot detect a total outage in which the service
+  # stops being scraped - that needs a separate `up`-based alert, which
+  # is out of scope for this lab and noted in docs/review.md section 4.
   - name: slo_sli_ratios
     interval: 30s
     rules:
 
-      # ---- Availability SLI (worked example) -----------------------
-      # Numerator:   2xx + 3xx responses to POST /checkout
-      # Denominator: all responses to POST /checkout that count toward
-      #              the SLI (we exclude /healthz and /metrics in the
-      #              checkout service itself, so we only need to scope
-      #              to the checkout route here).
+      # ---- Availability SLI ----------------------------------------
+      # good_events  : 2xx + 3xx responses to POST /checkout
+      # valid_events : 2xx + 3xx + 5xx responses to POST /checkout
+      #
+      # 4xx is excluded from BOTH numerator and denominator, so it is
+      # not a "bad event" - it is not an event at all. A 4xx here is
+      # the payments stub declining the charge and checkout passing that
+      # status through (checkout/main.py:153-157), i.e. the request was
+      # served correctly and the answer was "no". Counting declines as
+      # SLO violations would make the error budget a function of
+      # customer card quality rather than of service health.
+      # /healthz, /metrics and / are already excluded upstream by the
+      # service middleware (checkout/main.py:73-75), so they never
+      # appear in http_requests_total at all.
       - record: sli:checkout_availability:ratio_rate5m
         expr: |
-          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2..|3.."}[5m]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx"}[5m]))
           /
-          sum(rate(http_requests_total{service="checkout",route="/checkout"}[5m]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx|5xx"}[5m]))
 
       - record: sli:checkout_availability:ratio_rate30m
         expr: |
-          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2..|3.."}[30m]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx"}[30m]))
           /
-          sum(rate(http_requests_total{service="checkout",route="/checkout"}[30m]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx|5xx"}[30m]))
 
       - record: sli:checkout_availability:ratio_rate1h
         expr: |
-          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2..|3.."}[1h]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx"}[1h]))
           /
-          sum(rate(http_requests_total{service="checkout",route="/checkout"}[1h]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx|5xx"}[1h]))
 
       - record: sli:checkout_availability:ratio_rate6h
         expr: |
-          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2..|3.."}[6h]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx"}[6h]))
           /
-          sum(rate(http_requests_total{service="checkout",route="/checkout"}[6h]))
+          sum(rate(http_requests_total{service="checkout",route="/checkout",status_class=~"2xx|3xx|5xx"}[6h]))
 
       # ---- Latency SLI ---------------------------------------------
-      # TODO: write the four SLI ratios for latency.
-      # Hint: numerator is the histogram bucket count under your latency
-      # SLO threshold (the bucket boundary is at 0.3s in the checkout
-      # service histogram), denominator is the total observed count.
-      # Example shape (for the 5m window):
+      # good_events  : requests completing in < 300ms
+      # valid_events : all instrumented requests to POST /checkout
       #
-      #   sum(rate(http_request_duration_seconds_bucket{
-      #     service="checkout", route="/checkout", le="0.3"}[5m]))
-      #   /
-      #   sum(rate(http_request_duration_seconds_count{
-      #     service="checkout", route="/checkout"}[5m]))
+      # Threshold-style, not percentile-style. le="0.3" is an exact
+      # bucket boundary in checkout/main.py:38, so the numerator is a
+      # real count of requests under the threshold - no interpolation,
+      # and therefore safe to aggregate and to compare across windows.
       #
-      # Add the 5m / 30m / 1h / 6h variants below.
+      # Measurement caveat: http_request_duration_seconds carries only
+      # (route, method) - there is no status_class label on the
+      # histogram - so the latency SLI cannot exclude 4xx the way the
+      # availability SLI does, and it counts fast failures as "good"
+      # (a 502 returned in 5ms is under 300ms). Adding status_class to
+      # the histogram would fix that at the cost of multiplying its
+      # series count by 4; see docs/review.md section 6 for why that
+      # trade was rejected.
+      - record: sli:checkout_latency:ratio_rate5m
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{service="checkout",route="/checkout",le="0.3"}[5m]))
+          /
+          sum(rate(http_request_duration_seconds_count{service="checkout",route="/checkout"}[5m]))
+
+      - record: sli:checkout_latency:ratio_rate30m
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{service="checkout",route="/checkout",le="0.3"}[30m]))
+          /
+          sum(rate(http_request_duration_seconds_count{service="checkout",route="/checkout"}[30m]))
+
+      - record: sli:checkout_latency:ratio_rate1h
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{service="checkout",route="/checkout",le="0.3"}[1h]))
+          /
+          sum(rate(http_request_duration_seconds_count{service="checkout",route="/checkout"}[1h]))
+
+      - record: sli:checkout_latency:ratio_rate6h
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{service="checkout",route="/checkout",le="0.3"}[6h]))
+          /
+          sum(rate(http_request_duration_seconds_count{service="checkout",route="/checkout"}[6h]))
 
   # =================================================================
   # Layer B - burn rate
   # =================================================================
-  # Burn rate is the SLI's "error" complement divided by (1 - SLO).
-  # SET YOUR SLO TARGETS HERE as constants and replace `0.99` /  `0.99`
-  # below to match what you commit in docs/slo.md.
+  # burn rate = (1 - SLI) / (1 - SLO)
+  #           = observed bad fraction / budgeted bad fraction
+  #
+  # Burn rate 1.0 means budget is being consumed exactly as fast as it
+  # accrues: the 30-day budget lasts exactly 30 days. Burn rate B
+  # exhausts it in 30d/B.
   - name: slo_burn_rate
     interval: 30s
     rules:
 
-      # ---- Availability burn rate (worked example, 99% target) -----
+      # ---- Availability burn rate (99.9% target) -------------------
       - record: slo:checkout_availability:burnrate5m
         expr: |
-          (1 - sli:checkout_availability:ratio_rate5m) / (1 - 0.99)
+          (1 - sli:checkout_availability:ratio_rate5m) / (1 - 0.999)
 
       - record: slo:checkout_availability:burnrate30m
         expr: |
-          (1 - sli:checkout_availability:ratio_rate30m) / (1 - 0.99)
+          (1 - sli:checkout_availability:ratio_rate30m) / (1 - 0.999)
 
       - record: slo:checkout_availability:burnrate1h
         expr: |
-          (1 - sli:checkout_availability:ratio_rate1h) / (1 - 0.99)
+          (1 - sli:checkout_availability:ratio_rate1h) / (1 - 0.999)
 
       - record: slo:checkout_availability:burnrate6h
         expr: |
-          (1 - sli:checkout_availability:ratio_rate6h) / (1 - 0.99)
+          (1 - sli:checkout_availability:ratio_rate6h) / (1 - 0.999)
 
-      # ---- Latency burn rate ---------------------------------------
-      # TODO: add the four burn-rate recording rules for latency,
-      # using whatever target you committed in docs/slo.md.
+      # ---- Latency burn rate (99.9% target) ------------------------
+      - record: slo:checkout_latency:burnrate5m
+        expr: |
+          (1 - sli:checkout_latency:ratio_rate5m) / (1 - 0.999)
+
+      - record: slo:checkout_latency:burnrate30m
+        expr: |
+          (1 - sli:checkout_latency:ratio_rate30m) / (1 - 0.999)
+
+      - record: slo:checkout_latency:burnrate1h
+        expr: |
+          (1 - sli:checkout_latency:ratio_rate1h) / (1 - 0.999)
+
+      - record: slo:checkout_latency:burnrate6h
+        expr: |
+          (1 - sli:checkout_latency:ratio_rate6h) / (1 - 0.999)
 
   # =================================================================
   # Layer C - alerting rules
   # =================================================================
+  # Threshold derivation (30-day budget, burn rate B exhausts it in
+  # 30d/B):
+  #
+  #   14.4x -> 30d/14.4  = 50h to exhaustion; 1h at this rate spends
+  #            1/50 = 2% of the month's budget          -> page
+  #    6x   -> 30d/6     = 5 days to exhaustion; 6h at this rate spends
+  #            6/120 = 5% of the month's budget         -> ticket
+  #
+  # Both alerts AND a long window with a short window. The long window
+  # establishes that enough budget has actually been spent to be worth
+  # waking someone; the short window establishes that it is still being
+  # spent right now. Dropping the long window pages on 30-second
+  # blips; dropping the short window keeps paging for an hour after an
+  # incident has already recovered, because the long window decays
+  # slowly. Neither failure mode is acceptable, so the AND is not
+  # optional.
+  #
+  # `for: 2m` on all four: the short window already smooths single
+  # scrape glitches, so a longer `for` would mostly add detection
+  # latency rather than suppress noise. 2m at a 15s evaluation interval
+  # means 8 consecutive true evaluations are required.
   - name: slo_alerts
     rules:
 
       # ---- Availability fast burn (page) ---------------------------
-      # Fires when 1h burn-rate >= 14.4 AND 5m burn-rate >= 14.4.
-      # The dual-window AND is non-negotiable: long window confirms
-      # the issue is real, short window confirms it is still happening.
       - alert: SLOFastBurnAvailability
         expr: |
           slo:checkout_availability:burnrate1h >= 14.4
@@ -124,12 +223,17 @@ groups:
           service: checkout
           slo: availability
         annotations:
-          summary: "Checkout availability SLO is burning fast"
+          summary: "Checkout availability SLO is burning fast (page)"
+          slo_target: "99.9% of non-4xx POST /checkout responses are 2xx/3xx"
+          burn_rate: '{{ printf "%.2f" $value }}x over 1h'
           description: |
-            Availability burn rate is {{ printf "%.2f" $value }}x at 1h/5m
-            for {{ $labels.service }}. We will exhaust the 30d error budget
-            in under ~2 days at this rate.
-          runbook_url: "https://github.com/<your-fork>/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md"
+            POST /checkout availability burn rate is {{ printf "%.2f" $value }}x
+            over the 1h window and also >= 14.4x over the 5m window, so the
+            error budget is being spent ~{{ printf "%.0f" $value }} times faster
+            than it accrues. At 14.4x the 30-day budget (43m 12s) is gone in
+            50 hours, and this alert is at or above that. Users are seeing 5xx
+            on checkout right now.
+          runbook_url: "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability"
           dashboard_url: "http://localhost:3000/d/red-overview/red-overview?var-service=checkout"
 
       # ---- Availability slow burn (ticket) -------------------------
@@ -144,21 +248,65 @@ groups:
           service: checkout
           slo: availability
         annotations:
-          summary: "Checkout availability SLO is burning slowly"
+          summary: "Checkout availability SLO is burning slowly (ticket)"
+          slo_target: "99.9% of non-4xx POST /checkout responses are 2xx/3xx"
+          burn_rate: '{{ printf "%.2f" $value }}x over 6h'
           description: |
-            Availability burn rate is {{ printf "%.2f" $value }}x at 6h/30m
-            for {{ $labels.service }}. Investigate during business hours.
-          runbook_url: "https://github.com/<your-fork>/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md"
+            POST /checkout availability burn rate is {{ printf "%.2f" $value }}x
+            over the 6h window and also >= 6x over the 30m window. Not an
+            outage, but budget is leaking faster than it accrues: at 6x the
+            30-day budget is exhausted in 5 days, and this alert is at or
+            above that. Investigate during business hours; do not page.
+          runbook_url: "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability"
           dashboard_url: "http://localhost:3000/d/red-overview/red-overview?var-service=checkout"
 
       # ---- Latency fast burn (page) --------------------------------
-      # TODO: same shape as SLOFastBurnAvailability but referencing
-      # your latency burn-rate recording rules and labels:
-      #   severity: page
-      #   service:  checkout
-      #   slo:      latency
-      # Annotations must include summary, description (with $value),
-      # runbook_url, and dashboard_url.
+      - alert: SLOFastBurnLatency
+        expr: |
+          slo:checkout_latency:burnrate1h >= 14.4
+          AND
+          slo:checkout_latency:burnrate5m >= 14.4
+        for: 2m
+        labels:
+          severity: page
+          service: checkout
+          slo: latency
+        annotations:
+          summary: "Checkout latency SLO is burning fast (page)"
+          slo_target: "99.9% of POST /checkout requests complete in < 300ms"
+          burn_rate: '{{ printf "%.2f" $value }}x over 1h'
+          description: |
+            POST /checkout latency burn rate is {{ printf "%.2f" $value }}x over
+            the 1h window and also >= 14.4x over the 5m window: far more than
+            0.1% of requests are taking longer than 300ms. At 14.4x the 30-day
+            budget is gone in 50 hours, and this alert is at or above that.
+            Requests are still being served, so this will not show up as an
+            error-rate spike - check the latency panel, not the status-class
+            panel.
+          runbook_url: "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency"
+          dashboard_url: "http://localhost:3000/d/red-overview/red-overview?var-service=checkout"
 
       # ---- Latency slow burn (ticket) ------------------------------
-      # TODO: same shape with severity=ticket, 6h/30m windows, >= 6x.
+      - alert: SLOSlowBurnLatency
+        expr: |
+          slo:checkout_latency:burnrate6h >= 6
+          AND
+          slo:checkout_latency:burnrate30m >= 6
+        for: 2m
+        labels:
+          severity: ticket
+          service: checkout
+          slo: latency
+        annotations:
+          summary: "Checkout latency SLO is burning slowly (ticket)"
+          slo_target: "99.9% of POST /checkout requests complete in < 300ms"
+          burn_rate: '{{ printf "%.2f" $value }}x over 6h'
+          description: |
+            POST /checkout latency burn rate is {{ printf "%.2f" $value }}x over
+            the 6h window and also >= 6x over the 30m window. A persistent
+            tail-latency regression is leaking budget; at 6x the 30-day budget
+            is exhausted in 5 days, and this alert is at or above that.
+            Common causes: a downstream that got slower without erroring, or a
+            threshold/bucket mismatch after an instrumentation change.
+          runbook_url: "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency"
+          dashboard_url: "http://localhost:3000/d/red-overview/red-overview?var-service=checkout"

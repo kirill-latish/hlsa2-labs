@@ -1,0 +1,198 @@
+{
+  "captured_at": "2026-07-26T22:45:38Z",
+  "tsdb_status": {
+  "headStats": {
+    "numSeries": 1049,
+    "numLabelPairs": 564,
+    "chunkCount": 2826,
+    "minTime": 1785102682744,
+    "maxTime": 1785105937803
+  },
+  "seriesCountByMetricName": [
+    {
+      "name": "prometheus_http_request_duration_seconds_bucket",
+      "value": 130
+    },
+    {
+      "name": "prometheus_http_response_size_bytes_bucket",
+      "value": 117
+    },
+    {
+      "name": "prometheus_http_requests_total",
+      "value": 51
+    },
+    {
+      "name": "net_conntrack_dialer_conn_failed_total",
+      "value": 24
+    },
+    {
+      "name": "prometheus_target_sync_length_seconds",
+      "value": 20
+    },
+    {
+      "name": "prometheus_sd_kubernetes_events_total",
+      "value": 18
+    },
+    {
+      "name": "prometheus_tsdb_compaction_duration_seconds_bucket",
+      "value": 15
+    },
+    {
+      "name": "prometheus_tsdb_compaction_chunk_size_bytes_bucket",
+      "value": 13
+    },
+    {
+      "name": "prometheus_http_request_duration_seconds_count",
+      "value": 13
+    },
+    {
+      "name": "prometheus_http_request_duration_seconds_sum",
+      "value": 13
+    }
+  ],
+  "labelValueCountByLabelName": [
+    {
+      "name": "__name__",
+      "value": 329
+    },
+    {
+      "name": "le",
+      "value": 88
+    },
+    {
+      "name": "handler",
+      "value": 51
+    },
+    {
+      "name": "quantile",
+      "value": 9
+    },
+    {
+      "name": "role",
+      "value": 6
+    },
+    {
+      "name": "dialer_name",
+      "value": 6
+    },
+    {
+      "name": "config",
+      "value": 5
+    },
+    {
+      "name": "slice",
+      "value": 4
+    },
+    {
+      "name": "scrape_job",
+      "value": 4
+    },
+    {
+      "name": "job",
+      "value": 4
+    }
+  ],
+  "memoryInBytesByLabelName": [
+    {
+      "name": "__name__",
+      "value": 40884
+    },
+    {
+      "name": "instance",
+      "value": 14276
+    },
+    {
+      "name": "job",
+      "value": 10050
+    },
+    {
+      "name": "handler",
+      "value": 4768
+    },
+    {
+      "name": "le",
+      "value": 2464
+    },
+    {
+      "name": "rule_group",
+      "value": 1270
+    },
+    {
+      "name": "service",
+      "value": 834
+    },
+    {
+      "name": "scrape_job",
+      "value": 462
+    },
+    {
+      "name": "dialer_name",
+      "value": 364
+    },
+    {
+      "name": "alertmanager",
+      "value": 266
+    }
+  ],
+  "seriesCountByLabelValuePair": [
+    {
+      "name": "job=prometheus",
+      "value": 924
+    },
+    {
+      "name": "instance=localhost:9090",
+      "value": 924
+    },
+    {
+      "name": "__name__=prometheus_http_request_duration_seconds_bucket",
+      "value": 130
+    },
+    {
+      "name": "__name__=prometheus_http_response_size_bytes_bucket",
+      "value": 117
+    },
+    {
+      "name": "code=200",
+      "value": 52
+    },
+    {
+      "name": "__name__=prometheus_http_requests_total",
+      "value": 51
+    },
+    {
+      "name": "service=checkout",
+      "value": 44
+    },
+    {
+      "name": "le=+Inf",
+      "value": 41
+    },
+    {
+      "name": "instance=checkout:8080",
+      "value": 41
+    },
+    {
+      "name": "job=checkout",
+      "value": 41
+    }
+  ]
+}
+,
+  "series_per_http_metric": {
+  "http_requests_total": 2,
+  "http_requests_created": 2,
+  "http_request_duration_seconds_bucket": 12,
+  "http_request_duration_seconds_count": 1,
+  "http_request_duration_seconds_sum": 1,
+  "http_request_duration_seconds_created": 1
+}
+,
+  "distinct_label_values": {
+  "http_requests_total.route": 1,
+  "http_requests_total.method": 1,
+  "http_requests_total.status_class": 2,
+  "http_request_duration_seconds_bucket.route": 1,
+  "http_request_duration_seconds_bucket.method": 1,
+  "http_request_duration_seconds_bucket.le": 12
+}
+}

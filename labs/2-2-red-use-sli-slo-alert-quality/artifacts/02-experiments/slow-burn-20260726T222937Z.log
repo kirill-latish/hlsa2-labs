@@ -1,0 +1,7 @@
+Container hlsa2-payments  Running
+Container hlsa2-checkout  Running
+Container hlsa2-payments  Waiting
+Container hlsa2-payments  Healthy
+[loadgen] /metrics listening on :9999
+[loadgen] profile='slow-burn' rps=50.0 duration_s=5400.0 payments={'fail_ratio': 0.007, 'latency_ms': 30, 'latency_jitter_ms': 20} description='Inject 0.7% errors for 90 min. Slow-burn alert must fire.'
+[loadgen] payments injection set: {'fail_ratio': 0.007, 'latency_ms': 30, 'latency_jitter_ms': 20} -> {'status': 'ok', 'fail_ratio': 0.007, 'latency_ms': 30, 'latency_jitter_ms': 20}

@@ -40,16 +40,40 @@ mkdir -p "${ART_DIR}"
 LOG_FILE="${ART_DIR}/${PROFILE}-${TS}.log"
 META_FILE="${ART_DIR}/${PROFILE}-${TS}.meta.json"
 
+CAPTURE="${LAB_ROOT}/scripts/capture-metrics.sh"
+
 START_EPOCH="$(date -u +%s)"
 START_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "[run-experiment] profile=${PROFILE} start=${START_ISO}"
 echo "[run-experiment] log=${LOG_FILE}"
 
-docker compose run --rm loadgen python -m loadgen "${PROFILE}" 2>&1 | tee "${LOG_FILE}"
+# "before" snapshot: proves the SLO pipeline was quiet (or not) going in.
+bash "${CAPTURE}" snapshot "${ART_DIR}" "${PROFILE}-${TS}-before" || \
+  echo "[run-experiment] WARNING: before-snapshot failed" >&2
+
+# --use-aliases attaches the `loadgen` network alias to the one-off run
+# container. Without it `docker compose run` joins the network unaliased,
+# Prometheus cannot resolve loadgen:9999, and the client-side metrics the
+# load generator exposes are silently never scraped - the target simply
+# sits DOWN for the whole experiment.
+docker compose run --rm --use-aliases loadgen python -m loadgen "${PROFILE}" 2>&1 | tee "${LOG_FILE}"
 
 END_EPOCH="$(date -u +%s)"
 END_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 DURATION=$((END_EPOCH - START_EPOCH))
+
+# "after" snapshot, then the range series the TTD/TTR numbers are read
+# from. The range call sleeps first so the post-injection decay and the
+# alert's resolve transition land inside the captured window.
+bash "${CAPTURE}" snapshot "${ART_DIR}" "${PROFILE}-${TS}-after" || \
+  echo "[run-experiment] WARNING: after-snapshot failed" >&2
+
+RANGE_WAIT="${RANGE_WAIT:-300}"
+echo "[run-experiment] waiting ${RANGE_WAIT}s for alert decay before range capture"
+sleep "${RANGE_WAIT}"
+bash "${CAPTURE}" range "${ART_DIR}" "${PROFILE}-${TS}" \
+  "${START_EPOCH}" "${END_EPOCH}" || \
+  echo "[run-experiment] WARNING: range capture failed" >&2
 
 cat > "${META_FILE}" <<EOF
 {

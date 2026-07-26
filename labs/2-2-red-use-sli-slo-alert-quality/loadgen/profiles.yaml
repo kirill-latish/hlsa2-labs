@@ -39,6 +39,22 @@ profiles:
       latency_ms: 30
       latency_jitter_ms: 20
 
+  latency-burn:
+    description: "Inject 400ms downstream latency for 15 min. Latency fast-burn must fire; availability must stay clean."
+    rps: 50
+    duration_seconds: 900    # 15 min
+    payments:
+      fail_ratio: 0.0
+      latency_ms: 400
+      latency_jitter_ms: 50
+    # Rationale: none of the three homework profiles inject latency, so the
+    # two latency alerts would ship unexercised. 400ms +/-50ms puts every
+    # response above the 300ms SLO threshold without producing a single
+    # 5xx, which isolates the latency SLI from the availability SLI: this
+    # profile must fire SLOFastBurnLatency and must NOT fire
+    # SLOFastBurnAvailability. That independence is the actual claim under
+    # test, and it cannot be demonstrated by the error-injection profiles.
+
   # Convenience profile for quick smoke-tests during development.
   # Not part of the homework experiments.
   smoke:

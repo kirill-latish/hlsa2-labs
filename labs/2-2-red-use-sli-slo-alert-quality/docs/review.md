@@ -9,6 +9,32 @@ days, both alerted with a multi-window multi-burn-rate pair (14.4× page /
 is in `docs/slo.md`; the rules are in `prometheus/rules/slo.yml`; the
 evidence is in `artifacts/`.
 
+| Where to find each topic | Section |
+|---|---|
+| The two SLI definitions and rejected alternatives | 1 |
+| Burn-rate math, and why 14.4×/6× are right *for this service* | 2 |
+| Measured time-to-detect and time-to-reset per experiment | 3 |
+| False positives, false negatives, and the tuning that followed | 4 |
+| Error-budget policy: freeze level and override sign-off | 5 |
+| Label cardinality audit | 6 |
+| What breaks first at 10× traffic | 7 |
+
+**Three results worth reading even if nothing else is:**
+
+1. The zero-fault baseline fired an alert, and the alert was **right**. The
+   service breaches its own 300 ms latency SLO on 0.31% of requests with
+   nothing injected — a 3.15× steady-state burn. The 60-second smoke run
+   used to set the original target lacked the resolution to see it
+   (section 4).
+2. **Time-to-reset is governed by the short window's length**, not by how
+   fast the service recovers. One fault, one recovery, two alerts clearing
+   25 minutes apart: 315 s on a 5 m window, 1815 s on a 30 m window
+   (section 2).
+3. During `latency-burn` the 6 h availability burn read **41.68×** for an
+   outage that had ended half an hour earlier, while every shorter window
+   read 0. The dual-window AND is the only reason nothing paged
+   (section 2).
+
 ## 1. SLI design choices and rejected alternatives
 
 Both SLIs are event ratios of the form `good_events / valid_events`
@@ -78,6 +104,56 @@ fraction (2%) line up.
 5% over six hours is real budget leakage but not an emergency: it is
 work for business hours, hence `severity: ticket` and a routing path that
 does not page (`alertmanager/alertmanager.yml`).
+
+### Are 14.4× and 6× right *for this service*?
+
+The derivation above is generic — it follows from a 30-day budget and
+nothing else. Whether those numbers are correct **here** depends on where
+this service's actual failure modes land relative to them. Measured:
+
+| Condition | Measured burn | 14.4× page | 6× ticket | Correct outcome? |
+|---|---|---|---|---|
+| Availability, steady state | 0× (SLI 1.000000) | no | no | yes — silent |
+| Availability, 0.7% degradation | **7.19×** | no | **yes** | yes — ticket, not a page |
+| Availability, 5% outage | **48.9×** | **yes** | yes | yes — pages |
+| Latency, 100% breach | **≈1000×** | **yes** | yes | yes — pages |
+| **Latency, steady state** | **3.15×** | no | no | **only just** |
+
+For **availability** the thresholds are well placed. The two injected
+failure modes land at 7.19× and 48.9×, either side of 14.4× with wide
+margins — a factor of 2 below and a factor of 3.4 above. Nothing this
+service does at steady state comes near either threshold, because
+steady-state availability burn is exactly zero across 90,000 requests. The
+separation is not a lucky coincidence: it follows from choosing the SLO
+target so that it separates the regimes (`docs/slo.md` section 4), and the
+thresholds and the target are two halves of one decision.
+
+For **latency** they are not comfortable, and the honest answer is that
+the 6× ticket threshold is currently too tight for this service. Steady
+state burns 3.15×, so the margin to a ticket is **1.9×**, not the 6× of
+headroom the number implies. Ordinary variance crosses it — that is
+exactly what happened during the baseline run (section 4). Three ways to
+respond, in order of preference:
+
+1. **Fix the service.** 3.15× steady-state burn is a defect with a known
+   cause (`checkout/main.py:131`). Removing it restores the margin to the
+   ~1000× the thresholds were designed around. This is the right answer
+   and the reason the target was not relaxed.
+2. **Widen the latency slow-burn short window** from 30 m to 1 h. The
+   baseline violation was a 90-second burst; a longer short window
+   averages it away without touching the threshold, at the cost of
+   detection latency on real slow burns.
+3. **Raise the latency ticket threshold** from 6× to, say, 10×. Cheapest
+   and worst: it silences the alert without addressing why it fires, and
+   it would also silence a genuine 1% latency regression.
+
+None of the three is applied here — the thresholds are left at the
+standard 14.4×/6× so the experiment results are comparable to the
+canonical geometry, and the mismatch is documented rather than tuned
+away. **A threshold that is right for one SLO of a service is not
+automatically right for another SLO of the same service**, because it is
+the distance between steady state and the threshold that matters, not the
+threshold alone.
 
 ### Why the AND of two windows is non-negotiable
 
@@ -207,7 +283,7 @@ the same effect means a recovering service can page for an incident that
 ended, and a fault beginning right after a quiet period is detected faster
 than the identical fault beginning during peak traffic.
 
-## 4. False-positive analysis
+## 4. False positives, false negatives, and how the alerts were tuned
 
 **An alert did fire during the `nominal` baseline, and it was correct.**
 
@@ -321,14 +397,76 @@ because the lab runs at a constant 50 rps:
 - Or widen the short window at low traffic (5 m → 30 m), trading
   detection latency for resolution.
 
-There is also a **failure mode these alerts cannot detect at all**: if the
-service stops serving entirely, both SLI ratios return *no data* rather
-than 0, every comparison becomes false, and all four alerts go silent.
-This is correct in the lab (no requests means no user harm, and `loadgen`
-genuinely does stop between runs) but wrong in production. It needs a
-separate liveness alert on `up{job="checkout"} == 0` or on
-`absent(http_requests_total{...})`, which is out of scope here but is a
-real gap in the current config.
+### False negatives
+
+False positives are visible — someone gets woken and complains. False
+negatives are silent, so they have to be looked for deliberately. Four
+were found in this config, in descending order of severity.
+
+**1. Total outage produces total silence.** If the service stops serving
+entirely, both SLI ratios evaluate `0/0` and return *no data*, not 0.
+Every comparison against a no-data vector is false, so all four alerts go
+quiet. **The pipeline is indistinguishable from perfect health when the
+service is gone** — the worst possible failure mode for an alert, and the
+one an SLO-only alerting strategy is structurally prone to. Verified
+directly: with no traffic, `slo:checkout_availability:burnrate6h` returns
+`NaN` and nothing fires. This is benign in the lab (`loadgen` genuinely
+stops between runs, and no requests means no user harm) and unacceptable
+in production.
+
+**2. A sustained 1% error rate never pages.** At a 99.9% target, 1%
+errors is burn 10× — above the 6× ticket threshold, below the 14.4× page
+threshold. So a service failing one request in a hundred, indefinitely,
+generates a ticket and never a page, while exhausting a 30-day budget in
+three days. This is the intended behaviour of the geometry rather than a
+defect, but it is worth stating plainly: **the fast-burn alert is a
+detector of severe short outages, not of moderate persistent badness.**
+The slow-burn alert and the error-budget policy are what catch the
+latter, which is why the policy in section 5 has teeth independent of
+paging.
+
+**3. Window dilution can silence a correct alert.** Documented in
+section 3: the same 0.7% degradation fires at 7.19× with an empty 6h
+window and 5.25× — silent — if the window is half full of clean traffic.
+In production this means a fault beginning right after a traffic ramp is
+detected later than the identical fault beginning after a quiet period,
+and a short incident inside a busy window can be averaged below threshold
+entirely.
+
+**4. The latency SLI counts fast failures as good.** The histogram has no
+`status_class` label, so a 502 returned in 5 ms is a "good" latency
+event. During an availability incident the latency SLI therefore looks
+*better* than usual. It cannot mask the incident — availability alerts
+fire on the same traffic — but any attempt to read the latency SLO during
+an outage will mislead.
+
+### How the alerts were tuned, and what was deliberately left alone
+
+Tuning decisions actually made:
+
+| Decision | Rationale | Evidence it was needed |
+|---|---|---|
+| Dual-window AND on all four alerts | long window proves the budget was really spent, short window proves it still is | 6h read 41.68× during `latency-burn` for an outage that had ended; only the AND suppressed it |
+| `for: 2m` on all four | requires 8 consecutive true evaluations at a 15 s interval | caught a real 10.61× latency spike during `fast-burn` that would otherwise have ticketed |
+| Short window kept at 5 m / 30 m rather than lengthened | TTR is bounded by the short window (315 s vs 1815 s measured), so lengthening it directly delays recovery signalling | measured in section 2 |
+| SLO target chosen to separate the failure regimes | thresholds and target are one decision, not two | 7.19× vs 48.9× land either side of 14.4× |
+
+Deliberately **not** applied, with reasons — each is a known gap rather
+than an oversight:
+
+- **Minimum-volume guard.** Would fix false positive #1 (low traffic) and
+  the window-occupancy variant. Not added because this lab runs at a
+  constant 50 rps where it would never engage, so it would ship untested —
+  and an untested alert clause is itself a risk. It is the first thing to
+  add before this config sees variable traffic. Note the guard must bound
+  *events in the window*, not the request rate: the baseline true positive
+  happened at a full 50 rps with a window that had only just started
+  filling, so a rate-based guard would not have caught it.
+- **Liveness alert.** Fixes false negative #1 and is genuinely out of
+  scope for an SLO-focused lab, but is the single most important addition
+  for production use.
+- **Latency threshold or window changes.** Discussed in section 2; the
+  right fix is the service defect, not the alert.
 
 ## 5. Error-budget policy
 

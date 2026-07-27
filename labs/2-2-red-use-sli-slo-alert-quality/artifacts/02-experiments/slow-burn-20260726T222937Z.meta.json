@@ -1,0 +1,7 @@
+{
+  "profile": "slow-burn",
+  "start_iso": "2026-07-26T22:29:37Z",
+  "end_iso": "2026-07-27T00:05:21Z",
+  "duration_seconds": 5744,
+  "log_path": "artifacts/02-experiments/slow-burn-20260726T222937Z.log"
+}

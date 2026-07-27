@@ -39,7 +39,7 @@ Rejections, each with the reason that actually decided it:
 | Percentile-style latency alert (`histogram_quantile(0.99) > 0.3`) | No burn rate is derivable from a quantile — "p99 = 350 ms" does not express a fraction of budget spent, so the entire multi-window apparatus is unavailable. Quantiles also do not aggregate across windows or instances, and `histogram_quantile` interpolates *within* the bucket, making the value partly an artifact of bucket layout. |
 | Client-side / load-balancer SLI | The available client vantage point (`loadgen_request_duration_seconds`) runs as a container on the same Docker bridge as checkout — no DNS, no TLS, no WAN. It is a second server-side measurement wearing a client costume. It was also **not collectable**: `docker compose run` joins the network without the service alias, so `loadgen:9999` never resolved and Prometheus held that target DOWN for the entire first experiment. Fixed with `--use-aliases` in `scripts/run-experiment.sh`. |
 | Window-based SLI ("% of minutes under 1% errors") | Weights a 3 a.m. window with 2 requests equally with a peak window with 3,000. The budget is denominated in events, so the SLI must be too. |
-| Single composite SLI (good = 2xx **and** < 300 ms) | Destroys the diagnostic signal exactly when it is needed. The `latency-burn` experiment isolates the two SLIs by construction — 400 ms injected latency with zero 5xx (`CLAIM_SLI_INDEPENDENCE`). A composite would have reported one degraded number with no indication which half moved, and would have prevented differential routing (page vs ticket). |
+| Single composite SLI (good = 2xx **and** < 300 ms) | Destroys the diagnostic signal exactly when it is needed. The `latency-burn` experiment isolates the two SLIs by construction — 400 ms injected latency with zero 5xx. Measured mid-run: availability SLI **1.000000** while the latency SLI read **0.000070** — total separation, and no availability alert fired. A composite would have reported one degraded number with no indication which half moved, and would have prevented differential routing (page vs ticket). |
 | `status_class` on the latency histogram | Would let the latency SLI exclude 4xx and stop counting fast failures as good, but multiplies histogram series 4× (14 → 56 per route/method) to correct a metric that only misleads during an incident the availability SLO already pages on. See section 6. |
 
 ## 2. Burn-rate math: why 14.4× and 6×
@@ -87,17 +87,42 @@ spent. Dropping either produces a specific, well-understood failure — and
 both were observed in this lab rather than merely asserted:
 
 - **Drop the short window** and the alert keeps firing long after
-  recovery, because `rate()` over 6 h decays slowly.
-  `CLAIM_LONG_WINDOW_DECAY`
+  recovery, because `rate()` over a long window decays slowly. Measured on
+  the `fast-burn` run: one fault, one moment of recovery, two alerts that
+  cleared **25 minutes apart** — `SLOFastBurnAvailability` at 315 s,
+  `SLOSlowBurnAvailability` at 1815 s. The `latency-burn` run reproduces
+  it independently: 285 s and 1785 s.
+
+  **TTR is governed by the short window's length, not by `for` and not by
+  how fast the service recovered.** 315 s and 285 s against a 5 m window;
+  1815 s and 1785 s against a 30 m window — in every case within a scrape
+  interval or two of the window length itself. `for` delays *firing*; it
+  plays no part in clearing. The practical consequence: an operator
+  watching the 6 h burn rate after a fix is watching a number that
+  physically cannot recover for half an hour, and will conclude the fix
+  did not work.
 - **Drop the long window** and a 30-second blip pages. At 50 rps the 5 m
   window holds ~15,000 requests, so a burst of a few hundred errors — one
   bad deploy that is rolled back in a minute — crosses 14.4× on the short
   window alone.
 
-The same asymmetry should show up as a *cross-experiment* protection:
-during the `latency-burn` run the 1 h availability window still contains
-the previous fast-burn experiment's 5% errors, while the 5 m availability
-window is clean. `CLAIM_CROSS_EXPERIMENT`
+The same asymmetry showed up as *cross-experiment* protection, and it is
+the cleanest demonstration in the lab. Measured during the `latency-burn`
+run, the availability windows read:
+
+```
+6h  = 41.68x   <- still full of the previous experiment's 5% errors
+1h  =  0.00x
+30m =  0.00x
+5m  =  0.00x
+```
+
+The 6 h burn rate sat at nearly 7× the ticket threshold, describing an
+outage that had ended half an hour earlier. `SLOSlowBurnAvailability`
+did not fire, because its 30 m partner read zero. Without the AND, this
+run would have paged for the *previous* experiment — and in production,
+every incident would be followed by a stream of alerts about itself for
+as long as the longest window.
 
 `for: 2m` on all four alerts: at a 15 s evaluation interval that requires
 8 consecutive true evaluations. The short window already smooths
@@ -112,21 +137,42 @@ which exists only while an alert is pending or firing — so the first and
 last timestamps of the `alertstate="firing"` series are the detect and
 reset moments, measured rather than estimated.
 
-| # | Experiment | Profile | Duration | Injected | Fast fired? | Slow fired? | TTD | TTR |
-|---|---|---|---|---|---|---|---|---|
-| 1 | Slow-burn degradation | `slow-burn` | 90 min | 0.7% errors | no (7.19× < 14.4×) | **yes** | 456 s (7.6 min) | `TTR_SLOW` |
-| 2 | Steady-state baseline | `nominal` | 30 min | none | no | no | n/a | n/a |
-| 3 | Fast-burn outage | `fast-burn` | 12 min | 5% errors | **yes** | `SLOW_DURING_FAST` | `TTD_FAST` | `TTR_FAST` |
-| 4 | Latency degradation | `latency-burn` | 15 min | 400 ms ±50 ms | **yes (latency)** | `SLOW_DURING_LAT` | `TTD_LAT` | `TTR_LAT` |
+TTD and TTR are measured from the **true load window** — the first and last
+increment of `http_requests_total` — not from the wrapper script's
+timestamps. The two differ by up to 5.8 minutes on the slow-burn run
+(see the suspension note below), so script timestamps are not a sound
+reference.
+
+| # | Experiment | Profile | Load | Injected | Alerts fired | TTD | TTR |
+|---|---|---|---|---|---|---|---|
+| 1 | Slow-burn degradation | `slow-burn` | 90 min | 0.7% errors | `SLOSlowBurnAvailability` only — fast correctly silent at 7.19× < 14.4× | 435 s | not measured¹ |
+| 2 | Fast-burn outage | `fast-burn` | 12 min | 5% errors | `SLOFastBurnAvailability` **and** `SLOSlowBurnAvailability` (48.9× exceeds both thresholds) | 165 s both | **315 s** fast / **1815 s** slow |
+| 3 | Latency degradation | `latency-burn` | 15 min | 400 ms ±50 ms | `SLOFastBurnLatency` **and** `SLOSlowBurnLatency`; **no availability alert** | 165 s both | **285 s** fast / **1785 s** slow |
+| 4 | Steady-state baseline | `nominal` | 30 min | none | `SLOSlowBurnLatency`, 90 s — **a true positive, not a false one** (section 4) | 270 s | self-cleared mid-run |
+
+¹ The slow-burn run straddled a machine suspension. macOS `time.monotonic()`
+does not advance while the host sleeps, so the load generator delivered its
+full 90 minutes of monotonic-time load across 95.8 minutes of wall clock,
+and Prometheus lost scrapes around 00:00Z. The alert was still firing when
+scraping stopped, so the apparent resolve is suspension, not recovery. The
+equivalent measurement is recovered from experiments 2 and 3, which produce
+the same alert pair under continuous scraping. **An experiment that sleeps
+mid-run loses exactly the data it exists to produce, and the loss is
+indistinguishable from a clean resolve** — every subsequent run was executed
+under `caffeinate -i`.
 
 Observed burn rates against prediction:
 
 | Experiment | Predicted burn | Measured burn | Window |
 |---|---|---|---|
-| `slow-burn` | 7.0× | 7.19× | 6 h availability |
-| `fast-burn` | 50× | `MEASURED_FAST` | 1 h availability |
-| `latency-burn` | ≈1000× | `MEASURED_LAT` | 1 h latency |
-| `nominal` | 0× | `MEASURED_NOMINAL` | all |
+| `slow-burn` | 7.0× | **7.19×** | 6 h availability |
+| `fast-burn` | 50× | **48.9×** | 1 h availability |
+| `latency-burn` | ≈1000× | **≈1000×** (SLI 0.000070) | 1 h latency |
+| `nominal` availability | 0× | **0×** (SLI 1.000000) | all |
+| `nominal` latency | 0× | **3.15×** — prediction wrong, see section 4 | 30 m latency |
+
+Every prediction held except the last, and the one that failed is the most
+informative result in the lab.
 
 ### Experiment order is part of the method, not an afterthought
 
@@ -163,16 +209,91 @@ than the identical fault beginning during peak traffic.
 
 ## 4. False-positive analysis
 
-No alert fired during the `nominal` baseline. That is a structural
-property, not luck, and it has three separate causes worth naming:
+**An alert did fire during the `nominal` baseline, and it was correct.**
 
-1. **The dual-window AND.** The 6 h availability window still carried
-   residue from the preceding slow-burn experiment, yet the 30 m window
-   read 0 during the clean baseline, so `SLOSlowBurnAvailability` could
-   not fire — the "is it still happening" test doing its job on real
-   data. `CLAIM_BASELINE_RESIDUE`
+`SLOSlowBurnLatency` fired 270 s into the zero-fault baseline and cleared
+90 s later. The obvious write-up is "false positive, alert too sensitive".
+The measurement says otherwise: during that window the service genuinely
+served ~0.9% of requests slower than 300 ms, against a 0.1% budget. The
+alert reported a real SLO violation. It is a **true positive against a
+target the service does not meet**.
+
+The full baseline: 90,000 requests, availability SLI exactly 1.000000, and
+latency SLI 0.996853 — **279 requests over 300 ms with nothing injected**,
+a steady-state latency burn rate of **3.15×**. Breaches are bounded (81
+over 500 ms, 3 over 800 ms, none over 1 s) and arrive in bursts — 87 slow
+requests in a single minute, then near-zero for several, repeatedly. The
+signature of recurring sub-second stalls, consistent with the per-request
+`httpx.AsyncClient` construction at `checkout/main.py:131`.
+
+Two corrections I had to make to my own analysis here, both worth
+recording because each was the comfortable answer:
+
+1. I first attributed the slow requests to a **cold start**, having seen a
+   similar spike at the beginning of the `fast-burn` run. A per-minute
+   breakdown killed that: the bursts recur throughout all 30 minutes
+   (86.7 slow at 10:14, 86.7 at 10:22, 42.7 at 10:26, 21.3 at 10:31), and
+   the first 60 s of the baseline had **zero**. Start-of-run was the
+   pattern I expected, so it was the pattern I saw.
+2. I was about to record the baseline as clean because **the 60-second
+   smoke run showed 100% under 300 ms**. At 20 rps for 60 s, a 0.31%
+   breach rate predicts ~4 slow requests out of 1,199 — comfortably zero
+   on one sample. The short baseline did not show the service was healthy;
+   it lacked the resolution to show it was not.
+
+So the SLO target was originally justified against a measurement too small
+and too light to see the defect it was meant to bound. The target is kept
+at 99.9% deliberately (`docs/slo.md` section 4): 300 ms is what users need,
+the breach has a known cause and fix, and relaxing to 99.5% would encode
+the defect as the definition of good. The service is therefore **currently
+non-compliant with its own latency SLO**, and the margin from 3.15× to the
+6× ticket threshold is only 1.9× — narrow enough that ordinary variance
+crosses it, which is precisely what happened during the baseline.
+
+### Why the availability alerts did not false-positive
+
+No availability alert fired during the baseline. That is structural, not
+luck, and it has three separate causes worth naming:
+
+1. **The dual-window AND.** Measured mid-baseline, the availability burn
+   rates were `6h = 13.68×`, `1h = 0`, `30m = 0`, `5m = 0`. The 6 h window
+   still carried the fast-burn experiment's errors and stood at more than
+   twice the ticket threshold, while every shorter window read exactly
+   zero. `SLOSlowBurnAvailability` could not fire because its 30 m
+   partner was clean — the "is it still happening" test doing its job on
+   real data. On the long window alone, a perfectly healthy 30-minute
+   baseline would have ticketed.
 2. **`for: 2m`.** Eight consecutive true evaluations are required, so a
-   single bad scrape or one-off glitch cannot fire anything.
+   single bad scrape or one-off glitch cannot fire anything. **This was
+   not hypothetical — it caught a real one.** During the `fast-burn` run
+   (which injects *errors*, not latency) the latency burn rate spiked to
+   **10.61×**, well above the 6× ticket threshold, and
+   `SLOSlowBurnLatency` entered `pending` at 08:17:30Z. It never fired:
+   the spike lasted about 60 s and decayed below 6× before the `for`
+   timer elapsed.
+
+   The cause is the same periodic stall documented above, not the
+   injected fault: 22.7 requests over 300 ms in the first 60 s against
+   17.4 across the remaining 11 minutes. Two effects compound. The burst
+   is intrinsic to the service and would have happened anyway, and it
+   landed while the 5 m window held only ~1 minute of traffic — so a few
+   dozen slow requests were over 1% of a small denominator, ten times the
+   budget.
+
+   (I initially read this as a cold-start effect specific to run start.
+   The baseline later disproved that: its own first 60 s contained zero
+   slow requests, and the bursts recur throughout. The spike here is a
+   burst that happened to land early, amplified by a nearly empty
+   window.)
+
+   The lesson is about window occupancy, not traffic rate: **an alert
+   window that has just begun filling has almost no noise immunity**,
+   because a handful of events is a large fraction of a small
+   denominator. This is the same failure mode as the low-traffic column
+   in the table below, reached from a different direction — a window
+   recovering from a traffic gap is statistically identical to a
+   low-traffic window. `for: 2m` is what stopped it from becoming a
+   ticket here, and it is doing load-bearing work rather than decoration.
 3. **Volume.** At 50 rps the 5 m window holds ~15,000 requests. Crossing
    14.4× requires a bad fraction of 1.44%, i.e. **≈216 errors within 5
    minutes**. No plausible transient produces that.
@@ -270,8 +391,12 @@ Measured from `/api/v1/status/tsdb` and
 `count by (__name__)({__name__=~"http_.*"})`; raw data in
 `artifacts/cardinality.json`.
 
-Total Prometheus head series across the whole stack: **1,049**. Of that,
-the metrics backing both SLIs account for **19 series**.
+Total Prometheus head series across the whole stack, after all four
+experiments: **1,073**. Of that, the metrics backing both SLIs account for
+**19 series** (`http_*`), or 20 counting the in-flight gauge — **1.9% of
+the TSDB**. Four experiments including a 90-minute run added no series at
+all beyond the `5xx` status class appearing for the first time: series
+count is a function of label design, not of traffic or time.
 
 | Metric | Labels shipped | Distinct values observed | Bound on values | Series | Decision |
 |---|---|---|---|---|---|

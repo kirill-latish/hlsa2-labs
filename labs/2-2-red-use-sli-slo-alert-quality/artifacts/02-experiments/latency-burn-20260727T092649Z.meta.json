@@ -1,0 +1,7 @@
+{
+  "profile": "latency-burn",
+  "start_iso": "2026-07-27T09:26:49Z",
+  "end_iso": "2026-07-27T09:41:53Z",
+  "duration_seconds": 904,
+  "log_path": "artifacts/02-experiments/latency-burn-20260727T092649Z.log"
+}

@@ -110,7 +110,17 @@ times are measured, not inferred from wall-clock guesses.
 You can also run a profile directly without the wrapper:
 
 ```bash
-docker compose run --rm loadgen python -m loadgen fast-burn
+docker compose run --rm --use-aliases loadgen python -m loadgen fast-burn
+```
+
+**If you edit `loadgen/profiles.yaml`, rebuild the image first.** The
+Dockerfile `COPY`s the profiles into the image and nothing mounts them at
+runtime, so an edited profile is invisible to the container and the run
+fails with `Unknown profile`:
+
+```bash
+docker compose build loadgen
+docker compose run --rm --no-deps loadgen python -m loadgen --list   # verify
 ```
 
 ## What you write

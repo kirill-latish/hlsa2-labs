@@ -1,0 +1,9 @@
+Container hlsa2-payments  Running
+Container hlsa2-checkout  Running
+Container hlsa2-payments  Waiting
+Container hlsa2-payments  Healthy
+[loadgen] /metrics listening on :9999
+[loadgen] profile='fast-burn' rps=50.0 duration_s=720.0 payments={'fail_ratio': 0.05, 'latency_ms': 30, 'latency_jitter_ms': 20} description='Inject 5% errors for 12 min. Fast-burn alert must fire.'
+[loadgen] payments injection set: {'fail_ratio': 0.05, 'latency_ms': 30, 'latency_jitter_ms': 20} -> {'status': 'ok', 'fail_ratio': 0.05, 'latency_ms': 30, 'latency_jitter_ms': 20}
+[loadgen] profile='fast-burn' done; resetting payments to baseline
+[loadgen] payments injection set: {'fail_ratio': 0.0, 'latency_ms': 30, 'latency_jitter_ms': 20} -> {'status': 'ok', 'fail_ratio': 0.0, 'latency_ms': 30, 'latency_jitter_ms': 20}

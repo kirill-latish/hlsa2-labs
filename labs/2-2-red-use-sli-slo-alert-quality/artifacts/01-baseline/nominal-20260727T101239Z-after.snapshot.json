@@ -1,0 +1,193 @@
+{
+  "captured_at": "2026-07-27T10:42:42Z",
+  "captured_epoch": 1785148962,
+  "tag": "nominal-20260727T101239Z-after",
+  "sli": {
+    "availability_ratio_rate5m": 1,
+    "availability_ratio_rate30m": 1,
+    "availability_ratio_rate1h": 1,
+    "availability_ratio_rate6h": 0.989469954230031,
+    "latency_ratio_rate5m": 0.9992281243421516,
+    "latency_ratio_rate30m": 0.9968526757916426,
+    "latency_ratio_rate1h": 0.9968526757916426,
+    "latency_ratio_rate6h": 0.7323076923076922
+  },
+  "burn_rate": {
+    "availability_burnrate5m": 0,
+    "availability_burnrate30m": 0,
+    "availability_burnrate1h": 0,
+    "availability_burnrate6h": 10.62428868510278,
+    "latency_burnrate5m": 0.912344725945701,
+    "latency_burnrate30m": 3.2017690349775947,
+    "latency_burnrate1h": 3.2017690349775947,
+    "latency_burnrate6h": 270.0881285640226
+  },
+  "requests_by_status_class_5m": {"2xx": 15000.0, "5xx": 0.0}
+,
+  "latency_quantiles_5m": {"p50": 0.0339, "p95": 0.0939, "p99": 0.1588}
+,
+  "alerts": []
+,
+  "rule_health": [
+  {
+    "group": "slo_alerts",
+    "rule": "SLOFastBurnAvailability",
+    "type": "alerting",
+    "health": "ok",
+    "state": "inactive",
+    "lastError": ""
+  },
+  {
+    "group": "slo_alerts",
+    "rule": "SLOSlowBurnAvailability",
+    "type": "alerting",
+    "health": "ok",
+    "state": "inactive",
+    "lastError": ""
+  },
+  {
+    "group": "slo_alerts",
+    "rule": "SLOFastBurnLatency",
+    "type": "alerting",
+    "health": "ok",
+    "state": "inactive",
+    "lastError": ""
+  },
+  {
+    "group": "slo_alerts",
+    "rule": "SLOSlowBurnLatency",
+    "type": "alerting",
+    "health": "ok",
+    "state": "inactive",
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_availability:burnrate5m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_availability:burnrate30m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_availability:burnrate1h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_availability:burnrate6h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_latency:burnrate5m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_latency:burnrate30m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_latency:burnrate1h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_burn_rate",
+    "rule": "slo:checkout_latency:burnrate6h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_availability:ratio_rate5m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_availability:ratio_rate30m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_availability:ratio_rate1h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_availability:ratio_rate6h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_latency:ratio_rate5m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_latency:ratio_rate30m",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_latency:ratio_rate1h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  },
+  {
+    "group": "slo_sli_ratios",
+    "rule": "sli:checkout_latency:ratio_rate6h",
+    "type": "recording",
+    "health": "ok",
+    "state": null,
+    "lastError": ""
+  }
+]
+}

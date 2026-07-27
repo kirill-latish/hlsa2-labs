@@ -138,19 +138,55 @@ on. The trade is documented in `docs/review.md` section 6.
 Measured on the clean baseline (`artifacts/01-baseline/`, `nominal`
 profile, 50 rps for 30 minutes) and the initial smoke run:
 
-| Metric | Smoke (20 rps, 60 s) | Baseline (50 rps, 30 min) |
+| Metric | Smoke (20 rps, 60 s) | **Baseline (50 rps, 30 min)** |
 |---|---|---|
-| Requests to `/checkout` | 1,199 | `BASELINE_REQUESTS` |
-| Non-2xx responses | 0 | `BASELINE_ERRORS` |
-| Availability SLI | 1.000000 | `BASELINE_AVAIL_SLI` |
-| Requests under 300 ms | 1,199 / 1,199 (100%) | `BASELINE_UNDER_300MS` |
-| Latency SLI | 1.000000 | `BASELINE_LAT_SLI` |
-| p50 / p95 / p99 | 34 / 91 / 98 ms | `BASELINE_QUANTILES` |
+| Requests to `/checkout` | 1,199 | **90,000** |
+| Non-2xx responses | 0 | **0** |
+| Availability SLI | 1.000000 | **1.000000** |
+| Requests under 300 ms | 1,199 / 1,199 (100%) | **89,721 / 90,000 (99.690%)** |
+| Latency SLI | 1.000000 | **0.996853** |
+| Latency burn rate at steady state | 0× | **3.15×** |
+| p50 / p95 / p99 | 34 / 91 / 98 ms | **34 / 94 / 159 ms** |
 
-Steady-state behaviour consumes **no budget at all** on either SLI: zero
-errors and zero requests over 300 ms. A target cannot be justified as
-"just below observed", because observed is 100%. It has to be justified
-by what the target *does* — which is set the sensitivity of the alerts.
+**Availability** consumes no budget at steady state: 90,000 requests, zero
+failures, SLI exactly 1.000000.
+
+**Latency does not.** 279 of 90,000 requests exceeded 300 ms with no fault
+injected at all — 0.310%, which is **3.15× the 0.1% budget**. At that rate a
+30-day latency budget is exhausted in about 9.5 days by normal operation.
+The breaches are bounded (81 over 500 ms, 3 over 800 ms, none over 1 s) and
+arrive in periodic bursts rather than uniformly: 87 slow requests in one
+minute, then near-zero for several minutes, repeatedly through the run.
+The shape is consistent with recurring sub-second stalls from the
+per-request `httpx.AsyncClient` construction at `checkout/main.py:131`.
+
+**The 60-second smoke run could not have revealed this.** At 20 rps for
+60 s, 1,199 requests against a 0.31% breach rate predicts ~4 slow requests
+— indistinguishable from zero on a single sample. A baseline must be long
+enough and loaded enough to resolve the tail it is meant to characterise,
+or it will certify a defect as clean. This is the reason the baseline table
+above reports two columns rather than one.
+
+### Consequence for the target
+
+Observed steady state does **not** support 99.9% on latency. Two coherent
+responses exist: relax the target to ~99.5% (budget 0.5%, steady-state burn
+0.63×), or keep 99.9% and treat the 0.31% breach rate as a defect to fix.
+
+**This design keeps 99.9%.** 300 ms is a statement about what checkout's
+users need, and the measured breach rate has an identified cause and a known
+fix (hoist the client to module scope with a connection pool, `docs/review.md`
+section 7). Relaxing the SLO to 99.5% would encode the current defect as the
+permanent definition of "good" and remove the pressure to fix it — the SLO
+would then be measuring the implementation rather than the requirement.
+
+The honest consequence of that choice is recorded rather than hidden: **the
+service is currently non-compliant with its own latency SLO**, burning budget
+at 3.15× continuously. The margin to the 6× ticket threshold is only 1.9×, so
+ordinary variance occasionally pushes a 30-minute window over it — and did
+exactly that during the baseline run (`docs/review.md` section 4). That is
+the SLO working as intended: it converted an invisible latency defect into a
+visible, quantified budget cost.
 
 A note on reading these numbers, because it nearly produced a wrong
 target here. A 5-minute-window p99 sampled shortly after the slow-burn

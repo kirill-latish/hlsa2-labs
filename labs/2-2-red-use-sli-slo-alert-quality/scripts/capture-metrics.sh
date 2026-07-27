@@ -170,6 +170,20 @@ print(json.dumps([{
     RSTART=$((START - 120))
     REND=$((END + PAD))
 
+    # Prometheus cannot return samples that do not exist yet. run-experiment.sh
+    # calls this only RANGE_WAIT (default 300s) after the run ends, so a 2400s
+    # pad would silently request 35 minutes of future time and return a series
+    # that merely stops - indistinguishable from an alert that resolved.
+    # Clamp to now and say so; re-run this mode later to pick up the rest
+    # (retention is 2 days, so the data is still there).
+    NOW="$(date -u +%s)"
+    if [ "${REND}" -gt "${NOW}" ]; then
+      echo "[capture] NOTE: requested end $(( (REND - NOW) / 60 ))m in the future;" \
+           "clamping to now. Alert decay after $(date -u -r "${NOW}" +%H:%M:%SZ 2>/dev/null || date -u +%H:%M:%SZ)" \
+           "is NOT in this file - re-run 'capture-metrics.sh range' later for full TTR." >&2
+      REND="${NOW}"
+    fi
+
     python3 - "$FILE" "$RSTART" "$REND" "$PROM" <<'PY'
 import json, subprocess, sys, urllib.parse
 

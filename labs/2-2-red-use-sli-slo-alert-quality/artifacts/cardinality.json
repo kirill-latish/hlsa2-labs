@@ -1,25 +1,25 @@
 {
-  "captured_at": "2026-07-26T22:45:38Z",
+  "captured_at": "2026-07-27T11:33:41Z",
   "tsdb_status": {
   "headStats": {
-    "numSeries": 1049,
-    "numLabelPairs": 564,
-    "chunkCount": 2826,
-    "minTime": 1785102682744,
-    "maxTime": 1785105937803
+    "numSeries": 1073,
+    "numLabelPairs": 565,
+    "chunkCount": 4153,
+    "minTime": 1785146401539,
+    "maxTime": 1785152018764
   },
   "seriesCountByMetricName": [
     {
       "name": "prometheus_http_request_duration_seconds_bucket",
-      "value": 130
+      "value": 140
     },
     {
       "name": "prometheus_http_response_size_bytes_bucket",
-      "value": 117
+      "value": 126
     },
     {
       "name": "prometheus_http_requests_total",
-      "value": 51
+      "value": 52
     },
     {
       "name": "net_conntrack_dialer_conn_failed_total",
@@ -38,16 +38,16 @@
       "value": 15
     },
     {
-      "name": "prometheus_tsdb_compaction_chunk_size_bytes_bucket",
-      "value": 13
-    },
-    {
-      "name": "prometheus_http_request_duration_seconds_count",
-      "value": 13
+      "name": "prometheus_http_response_size_bytes_sum",
+      "value": 14
     },
     {
       "name": "prometheus_http_request_duration_seconds_sum",
-      "value": 13
+      "value": 14
+    },
+    {
+      "name": "prometheus_http_request_duration_seconds_count",
+      "value": 14
     }
   ],
   "labelValueCountByLabelName": [
@@ -68,11 +68,11 @@
       "value": 9
     },
     {
-      "name": "role",
+      "name": "dialer_name",
       "value": 6
     },
     {
-      "name": "dialer_name",
+      "name": "role",
       "value": 6
     },
     {
@@ -80,38 +80,38 @@
       "value": 5
     },
     {
-      "name": "slice",
-      "value": 4
-    },
-    {
       "name": "scrape_job",
       "value": 4
     },
     {
-      "name": "job",
+      "name": "reason",
+      "value": 4
+    },
+    {
+      "name": "slice",
       "value": 4
     }
   ],
   "memoryInBytesByLabelName": [
     {
       "name": "__name__",
-      "value": 40884
+      "value": 41932
     },
     {
       "name": "instance",
-      "value": 14276
+      "value": 14612
     },
     {
       "name": "job",
-      "value": 10050
+      "value": 10290
     },
     {
       "name": "handler",
-      "value": 4768
+      "value": 5218
     },
     {
       "name": "le",
-      "value": 2464
+      "value": 2529
     },
     {
       "name": "rule_group",
@@ -136,28 +136,28 @@
   ],
   "seriesCountByLabelValuePair": [
     {
-      "name": "job=prometheus",
-      "value": 924
+      "name": "instance=localhost:9090",
+      "value": 948
     },
     {
-      "name": "instance=localhost:9090",
-      "value": 924
+      "name": "job=prometheus",
+      "value": 948
     },
     {
       "name": "__name__=prometheus_http_request_duration_seconds_bucket",
-      "value": 130
+      "value": 140
     },
     {
       "name": "__name__=prometheus_http_response_size_bytes_bucket",
-      "value": 117
+      "value": 126
+    },
+    {
+      "name": "__name__=prometheus_http_requests_total",
+      "value": 52
     },
     {
       "name": "code=200",
       "value": 52
-    },
-    {
-      "name": "__name__=prometheus_http_requests_total",
-      "value": 51
     },
     {
       "name": "service=checkout",
@@ -165,7 +165,7 @@
     },
     {
       "name": "le=+Inf",
-      "value": 41
+      "value": 43
     },
     {
       "name": "instance=checkout:8080",

@@ -1,0 +1,1121 @@
+Listening on ports 8080 for http, and 8443 for https.
+{
+    "path": "/",
+    "headers": {
+        "host": "localhost:5001",
+        "user-agent": "curl/8.7.1",
+        "accept": "*/*",
+        "content-type": "application/json",
+        "content-length": "19"
+    },
+    "method": "POST",
+    "body": "{\"probe\":\"sink-up\"}",
+    "fresh": false,
+    "hostname": "localhost",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "probe": "sink-up"
+    }
+}
+::ffff:172.17.0.1 - - [26/Jul/2026:22:20:56 +0000] "POST / HTTP/1.1" 200 510 "-" "curl/8.7.1"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2454",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"6.48x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 6.48x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-26T22:37:01.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"8980dc51b29078b2\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"6.48x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 6.48x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOSlowBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "6.48x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 6.48x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-26T22:37:01.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "8980dc51b29078b2"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "6.48x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 6.48x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [26/Jul/2026:22:37:31 +0000] "POST / HTTP/1.1" 200 5990 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2462",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"7.04x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 7.04x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-26T22:37:01.539Z\",\"endsAt\":\"2026-07-26T23:59:31.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"8980dc51b29078b2\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"7.04x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 7.04x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOSlowBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "7.04x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 7.04x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-26T22:37:01.539Z",
+                "endsAt": "2026-07-26T23:59:31.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "8980dc51b29078b2"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "7.04x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 7.04x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:00:00:12 +0000] "POST / HTTP/1.1" 200 6006 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2454",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"7.08x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 7.08x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T00:02:16.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"8980dc51b29078b2\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"7.08x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 7.08x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOSlowBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "7.08x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 7.08x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T00:02:16.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "8980dc51b29078b2"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "7.08x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 7.08x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:00:02:57 +0000] "POST / HTTP/1.1" 200 5990 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2462",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"7.10x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 7.10x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T00:02:16.539Z\",\"endsAt\":\"2026-07-27T00:26:01.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"8980dc51b29078b2\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"7.10x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 7.10x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOSlowBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "7.10x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 7.10x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T00:02:16.539Z",
+                "endsAt": "2026-07-27T00:26:01.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "8980dc51b29078b2"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "7.10x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 7.10x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:00:26:22 +0000] "POST / HTTP/1.1" 200 6006 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2472",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"pager\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOFastBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"48.82x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 48.82x\\nover the 1h window and also \\u003e= 14.4x over the 5m window, so the\\nerror budget is being spent ~49 times faster\\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\\n50 hours, and this alert is at or above that. Users are seeing 5xx\\non checkout right now.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning fast (page)\"},\"startsAt\":\"2026-07-27T08:18:16.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_availability%3Aburnrate5m+%3E%3D+14.4\\u0026g0.tab=1\",\"fingerprint\":\"4c883aa26deafdf0\"}],\"groupLabels\":{\"alertname\":\"SLOFastBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOFastBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"48.82x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 48.82x\\nover the 1h window and also \\u003e= 14.4x over the 5m window, so the\\nerror budget is being spent ~49 times faster\\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\\n50 hours, and this alert is at or above that. Users are seeing 5xx\\non checkout right now.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning fast (page)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"page\\\"}:{alertname=\\\"SLOFastBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "pager",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOFastBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "page",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "48.82x over 1h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 48.82x\nover the 1h window and also >= 14.4x over the 5m window, so the\nerror budget is being spent ~49 times faster\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\n50 hours, and this alert is at or above that. Users are seeing 5xx\non checkout right now.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning fast (page)"
+                },
+                "startsAt": "2026-07-27T08:18:16.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_availability%3Aburnrate5m+%3E%3D+14.4&g0.tab=1",
+                "fingerprint": "4c883aa26deafdf0"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOFastBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOFastBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "page",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "48.82x over 1h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 48.82x\nover the 1h window and also >= 14.4x over the 5m window, so the\nerror budget is being spent ~49 times faster\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\n50 hours, and this alert is at or above that. Users are seeing 5xx\non checkout right now.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning fast (page)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"page\"}:{alertname=\"SLOFastBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:08:18:30 +0000] "POST / HTTP/1.1" 200 6028 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2480",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"pager\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOFastBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"49.53x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 49.53x\\nover the 1h window and also \\u003e= 14.4x over the 5m window, so the\\nerror budget is being spent ~50 times faster\\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\\n50 hours, and this alert is at or above that. Users are seeing 5xx\\non checkout right now.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning fast (page)\"},\"startsAt\":\"2026-07-27T08:18:16.539Z\",\"endsAt\":\"2026-07-27T08:33:16.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_availability%3Aburnrate5m+%3E%3D+14.4\\u0026g0.tab=1\",\"fingerprint\":\"4c883aa26deafdf0\"}],\"groupLabels\":{\"alertname\":\"SLOFastBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOFastBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"49.53x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 49.53x\\nover the 1h window and also \\u003e= 14.4x over the 5m window, so the\\nerror budget is being spent ~50 times faster\\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\\n50 hours, and this alert is at or above that. Users are seeing 5xx\\non checkout right now.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning fast (page)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"page\\\"}:{alertname=\\\"SLOFastBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "pager",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOFastBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "page",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "49.53x over 1h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 49.53x\nover the 1h window and also >= 14.4x over the 5m window, so the\nerror budget is being spent ~50 times faster\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\n50 hours, and this alert is at or above that. Users are seeing 5xx\non checkout right now.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning fast (page)"
+                },
+                "startsAt": "2026-07-27T08:18:16.539Z",
+                "endsAt": "2026-07-27T08:33:16.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_availability%3Aburnrate5m+%3E%3D+14.4&g0.tab=1",
+                "fingerprint": "4c883aa26deafdf0"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOFastBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOFastBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "page",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "49.53x over 1h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 49.53x\nover the 1h window and also >= 14.4x over the 5m window, so the\nerror budget is being spent ~50 times faster\nthan it accrues. At 14.4x the 30-day budget (43m 12s) is gone in\n50 hours, and this alert is at or above that. Users are seeing 5xx\non checkout right now.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning fast (page)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"page\"}:{alertname=\"SLOFastBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:08:33:30 +0000] "POST / HTTP/1.1" 200 6044 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2458",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"49.53x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 49.53x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T08:18:16.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"8980dc51b29078b2\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"49.53x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 49.53x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOSlowBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "49.53x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 49.53x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T08:18:16.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "8980dc51b29078b2"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "49.53x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 49.53x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:08:33:50 +0000] "POST / HTTP/1.1" 200 5998 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2466",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"annotations\":{\"burn_rate\":\"49.53x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 49.53x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T08:18:16.539Z\",\"endsAt\":\"2026-07-27T08:58:16.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"8980dc51b29078b2\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"service\":\"checkout\",\"slo\":\"availability\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnAvailability\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"availability\"},\"commonAnnotations\":{\"burn_rate\":\"49.53x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout availability burn rate is 49.53x\\nover the 6h window and also \\u003e= 6x over the 30m window. Not an\\noutage, but budget is leaking faster than it accrues: at 6x the\\n30-day budget is exhausted in 5 days, and this alert is at or\\nabove that. Investigate during business hours; do not page.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability\",\"slo_target\":\"99.9% of non-4xx POST /checkout responses are 2xx/3xx\",\"summary\":\"Checkout availability SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnAvailability\\\", service=\\\"checkout\\\", slo=\\\"availability\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOSlowBurnAvailability",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "availability"
+                },
+                "annotations": {
+                    "burn_rate": "49.53x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout availability burn rate is 49.53x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+                    "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+                    "summary": "Checkout availability SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T08:18:16.539Z",
+                "endsAt": "2026-07-27T08:58:16.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_availability%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_availability%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "8980dc51b29078b2"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "service": "checkout",
+            "slo": "availability"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnAvailability",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "availability"
+        },
+        "commonAnnotations": {
+            "burn_rate": "49.53x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout availability burn rate is 49.53x\nover the 6h window and also >= 6x over the 30m window. Not an\noutage, but budget is leaking faster than it accrues: at 6x the\n30-day budget is exhausted in 5 days, and this alert is at or\nabove that. Investigate during business hours; do not page.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnavailability",
+            "slo_target": "99.9% of non-4xx POST /checkout responses are 2xx/3xx",
+            "summary": "Checkout availability SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnAvailability\", service=\"checkout\", slo=\"availability\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:08:58:28 +0000] "POST / HTTP/1.1" 200 6014 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2558",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"pager\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOFastBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"latency\"},\"annotations\":{\"burn_rate\":\"1000.00x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 1000.00x over\\nthe 1h window and also \\u003e= 14.4x over the 5m window: far more than\\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\\nbudget is gone in 50 hours, and this alert is at or above that.\\nRequests are still being served, so this will not show up as an\\nerror-rate spike - check the latency panel, not the status-class\\npanel.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning fast (page)\"},\"startsAt\":\"2026-07-27T09:29:46.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_latency%3Aburnrate5m+%3E%3D+14.4\\u0026g0.tab=1\",\"fingerprint\":\"9bc5fde1ea4830f6\"}],\"groupLabels\":{\"alertname\":\"SLOFastBurnLatency\",\"service\":\"checkout\",\"slo\":\"latency\"},\"commonLabels\":{\"alertname\":\"SLOFastBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"latency\"},\"commonAnnotations\":{\"burn_rate\":\"1000.00x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 1000.00x over\\nthe 1h window and also \\u003e= 14.4x over the 5m window: far more than\\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\\nbudget is gone in 50 hours, and this alert is at or above that.\\nRequests are still being served, so this will not show up as an\\nerror-rate spike - check the latency panel, not the status-class\\npanel.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning fast (page)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"page\\\"}:{alertname=\\\"SLOFastBurnLatency\\\", service=\\\"checkout\\\", slo=\\\"latency\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "pager",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOFastBurnLatency",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "page",
+                    "slo": "latency"
+                },
+                "annotations": {
+                    "burn_rate": "1000.00x over 1h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout latency burn rate is 1000.00x over\nthe 1h window and also >= 14.4x over the 5m window: far more than\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\nbudget is gone in 50 hours, and this alert is at or above that.\nRequests are still being served, so this will not show up as an\nerror-rate spike - check the latency panel, not the status-class\npanel.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency",
+                    "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+                    "summary": "Checkout latency SLO is burning fast (page)"
+                },
+                "startsAt": "2026-07-27T09:29:46.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_latency%3Aburnrate5m+%3E%3D+14.4&g0.tab=1",
+                "fingerprint": "9bc5fde1ea4830f6"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOFastBurnLatency",
+            "service": "checkout",
+            "slo": "latency"
+        },
+        "commonLabels": {
+            "alertname": "SLOFastBurnLatency",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "page",
+            "slo": "latency"
+        },
+        "commonAnnotations": {
+            "burn_rate": "1000.00x over 1h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout latency burn rate is 1000.00x over\nthe 1h window and also >= 14.4x over the 5m window: far more than\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\nbudget is gone in 50 hours, and this alert is at or above that.\nRequests are still being served, so this will not show up as an\nerror-rate spike - check the latency panel, not the status-class\npanel.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency",
+            "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+            "summary": "Checkout latency SLO is burning fast (page)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"page\"}:{alertname=\"SLOFastBurnLatency\", service=\"checkout\", slo=\"latency\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:09:29:58 +0000] "POST / HTTP/1.1" 200 6194 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2538",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"annotations\":{\"burn_rate\":\"556.19x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 556.19x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T09:29:46.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"01b80c7fbb56fc42\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"service\":\"checkout\",\"slo\":\"latency\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"commonAnnotations\":{\"burn_rate\":\"556.19x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 556.19x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnLatency\\\", service=\\\"checkout\\\", slo=\\\"latency\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOSlowBurnLatency",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "latency"
+                },
+                "annotations": {
+                    "burn_rate": "556.19x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout latency burn rate is 556.19x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+                    "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+                    "summary": "Checkout latency SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T09:29:46.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "01b80c7fbb56fc42"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "service": "checkout",
+            "slo": "latency"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "latency"
+        },
+        "commonAnnotations": {
+            "burn_rate": "556.19x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout latency burn rate is 556.19x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+            "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+            "summary": "Checkout latency SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnLatency\", service=\"checkout\", slo=\"latency\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:09:47:28 +0000] "POST / HTTP/1.1" 200 6152 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2562",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"pager\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOFastBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"latency\"},\"annotations\":{\"burn_rate\":\"999.98x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 999.98x over\\nthe 1h window and also \\u003e= 14.4x over the 5m window: far more than\\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\\nbudget is gone in 50 hours, and this alert is at or above that.\\nRequests are still being served, so this will not show up as an\\nerror-rate spike - check the latency panel, not the status-class\\npanel.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning fast (page)\"},\"startsAt\":\"2026-07-27T09:29:46.539Z\",\"endsAt\":\"2026-07-27T09:47:16.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_latency%3Aburnrate5m+%3E%3D+14.4\\u0026g0.tab=1\",\"fingerprint\":\"9bc5fde1ea4830f6\"}],\"groupLabels\":{\"alertname\":\"SLOFastBurnLatency\",\"service\":\"checkout\",\"slo\":\"latency\"},\"commonLabels\":{\"alertname\":\"SLOFastBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"page\",\"slo\":\"latency\"},\"commonAnnotations\":{\"burn_rate\":\"999.98x over 1h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 999.98x over\\nthe 1h window and also \\u003e= 14.4x over the 5m window: far more than\\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\\nbudget is gone in 50 hours, and this alert is at or above that.\\nRequests are still being served, so this will not show up as an\\nerror-rate spike - check the latency panel, not the status-class\\npanel.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning fast (page)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"page\\\"}:{alertname=\\\"SLOFastBurnLatency\\\", service=\\\"checkout\\\", slo=\\\"latency\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "pager",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOFastBurnLatency",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "page",
+                    "slo": "latency"
+                },
+                "annotations": {
+                    "burn_rate": "999.98x over 1h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout latency burn rate is 999.98x over\nthe 1h window and also >= 14.4x over the 5m window: far more than\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\nbudget is gone in 50 hours, and this alert is at or above that.\nRequests are still being served, so this will not show up as an\nerror-rate spike - check the latency panel, not the status-class\npanel.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency",
+                    "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+                    "summary": "Checkout latency SLO is burning fast (page)"
+                },
+                "startsAt": "2026-07-27T09:29:46.539Z",
+                "endsAt": "2026-07-27T09:47:16.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate1h+%3E%3D+14.4+and+slo%3Acheckout_latency%3Aburnrate5m+%3E%3D+14.4&g0.tab=1",
+                "fingerprint": "9bc5fde1ea4830f6"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOFastBurnLatency",
+            "service": "checkout",
+            "slo": "latency"
+        },
+        "commonLabels": {
+            "alertname": "SLOFastBurnLatency",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "page",
+            "slo": "latency"
+        },
+        "commonAnnotations": {
+            "burn_rate": "999.98x over 1h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout latency burn rate is 999.98x over\nthe 1h window and also >= 14.4x over the 5m window: far more than\n0.1% of requests are taking longer than 300ms. At 14.4x the 30-day\nbudget is gone in 50 hours, and this alert is at or above that.\nRequests are still being served, so this will not show up as an\nerror-rate spike - check the latency panel, not the status-class\npanel.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#pager-slofastburnlatency",
+            "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+            "summary": "Checkout latency SLO is burning fast (page)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"page\"}:{alertname=\"SLOFastBurnLatency\", service=\"checkout\", slo=\"latency\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:09:47:58 +0000] "POST / HTTP/1.1" 200 6202 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2546",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"annotations\":{\"burn_rate\":\"556.19x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 556.19x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T09:29:46.539Z\",\"endsAt\":\"2026-07-27T10:12:16.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"01b80c7fbb56fc42\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"service\":\"checkout\",\"slo\":\"latency\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"commonAnnotations\":{\"burn_rate\":\"556.19x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 556.19x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnLatency\\\", service=\\\"checkout\\\", slo=\\\"latency\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOSlowBurnLatency",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "latency"
+                },
+                "annotations": {
+                    "burn_rate": "556.19x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout latency burn rate is 556.19x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+                    "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+                    "summary": "Checkout latency SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T09:29:46.539Z",
+                "endsAt": "2026-07-27T10:12:16.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "01b80c7fbb56fc42"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "service": "checkout",
+            "slo": "latency"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "latency"
+        },
+        "commonAnnotations": {
+            "burn_rate": "556.19x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout latency burn rate is 556.19x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+            "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+            "summary": "Checkout latency SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnLatency\", service=\"checkout\", slo=\"latency\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:10:12:28 +0000] "POST / HTTP/1.1" 200 6168 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2538",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"firing\",\"alerts\":[{\"status\":\"firing\",\"labels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"annotations\":{\"burn_rate\":\"486.25x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 486.25x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T10:17:16.539Z\",\"endsAt\":\"0001-01-01T00:00:00Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"01b80c7fbb56fc42\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"service\":\"checkout\",\"slo\":\"latency\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"commonAnnotations\":{\"burn_rate\":\"486.25x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 486.25x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnLatency\\\", service=\\\"checkout\\\", slo=\\\"latency\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "firing",
+        "alerts": [
+            {
+                "status": "firing",
+                "labels": {
+                    "alertname": "SLOSlowBurnLatency",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "latency"
+                },
+                "annotations": {
+                    "burn_rate": "486.25x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout latency burn rate is 486.25x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+                    "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+                    "summary": "Checkout latency SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T10:17:16.539Z",
+                "endsAt": "0001-01-01T00:00:00Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "01b80c7fbb56fc42"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "service": "checkout",
+            "slo": "latency"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "latency"
+        },
+        "commonAnnotations": {
+            "burn_rate": "486.25x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout latency burn rate is 486.25x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+            "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+            "summary": "Checkout latency SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnLatency\", service=\"checkout\", slo=\"latency\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:10:17:58 +0000] "POST / HTTP/1.1" 200 6152 "-" "Alertmanager/0.27.0"
+{
+    "path": "/",
+    "headers": {
+        "host": "host.docker.internal:5001",
+        "user-agent": "Alertmanager/0.27.0",
+        "content-length": "2546",
+        "content-type": "application/json"
+    },
+    "method": "POST",
+    "body": "{\"receiver\":\"default-ticket\",\"status\":\"resolved\",\"alerts\":[{\"status\":\"resolved\",\"labels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"annotations\":{\"burn_rate\":\"471.05x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 471.05x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"startsAt\":\"2026-07-27T10:17:16.539Z\",\"endsAt\":\"2026-07-27T10:18:46.539Z\",\"generatorURL\":\"http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6\\u0026g0.tab=1\",\"fingerprint\":\"01b80c7fbb56fc42\"}],\"groupLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"service\":\"checkout\",\"slo\":\"latency\"},\"commonLabels\":{\"alertname\":\"SLOSlowBurnLatency\",\"monitor\":\"hlsa2-lab-2-2\",\"service\":\"checkout\",\"severity\":\"ticket\",\"slo\":\"latency\"},\"commonAnnotations\":{\"burn_rate\":\"471.05x over 6h\",\"dashboard_url\":\"http://localhost:3000/d/red-overview/red-overview?var-service=checkout\",\"description\":\"POST /checkout latency burn rate is 471.05x over\\nthe 6h window and also \\u003e= 6x over the 30m window. A persistent\\ntail-latency regression is leaking budget; at 6x the 30-day budget\\nis exhausted in 5 days, and this alert is at or above that.\\nCommon causes: a downstream that got slower without erroring, or a\\nthreshold/bucket mismatch after an instrumentation change.\\n\",\"runbook_url\":\"https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency\",\"slo_target\":\"99.9% of POST /checkout requests complete in \\u003c 300ms\",\"summary\":\"Checkout latency SLO is burning slowly (ticket)\"},\"externalURL\":\"http://1f5ad2cc326f:9093\",\"version\":\"4\",\"groupKey\":\"{}/{severity=\\\"ticket\\\"}:{alertname=\\\"SLOSlowBurnLatency\\\", service=\\\"checkout\\\", slo=\\\"latency\\\"}\",\"truncatedAlerts\":0}\n",
+    "fresh": false,
+    "hostname": "host.docker.internal",
+    "ip": "::ffff:172.17.0.1",
+    "ips": [],
+    "protocol": "http",
+    "query": {},
+    "subdomains": [
+        "host"
+    ],
+    "xhr": false,
+    "os": {
+        "hostname": "afe932fab513"
+    },
+    "connection": {},
+    "json": {
+        "receiver": "default-ticket",
+        "status": "resolved",
+        "alerts": [
+            {
+                "status": "resolved",
+                "labels": {
+                    "alertname": "SLOSlowBurnLatency",
+                    "monitor": "hlsa2-lab-2-2",
+                    "service": "checkout",
+                    "severity": "ticket",
+                    "slo": "latency"
+                },
+                "annotations": {
+                    "burn_rate": "471.05x over 6h",
+                    "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+                    "description": "POST /checkout latency burn rate is 471.05x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+                    "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+                    "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+                    "summary": "Checkout latency SLO is burning slowly (ticket)"
+                },
+                "startsAt": "2026-07-27T10:17:16.539Z",
+                "endsAt": "2026-07-27T10:18:46.539Z",
+                "generatorURL": "http://767f07c29095:9090/graph?g0.expr=slo%3Acheckout_latency%3Aburnrate6h+%3E%3D+6+and+slo%3Acheckout_latency%3Aburnrate30m+%3E%3D+6&g0.tab=1",
+                "fingerprint": "01b80c7fbb56fc42"
+            }
+        ],
+        "groupLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "service": "checkout",
+            "slo": "latency"
+        },
+        "commonLabels": {
+            "alertname": "SLOSlowBurnLatency",
+            "monitor": "hlsa2-lab-2-2",
+            "service": "checkout",
+            "severity": "ticket",
+            "slo": "latency"
+        },
+        "commonAnnotations": {
+            "burn_rate": "471.05x over 6h",
+            "dashboard_url": "http://localhost:3000/d/red-overview/red-overview?var-service=checkout",
+            "description": "POST /checkout latency burn rate is 471.05x over\nthe 6h window and also >= 6x over the 30m window. A persistent\ntail-latency regression is leaking budget; at 6x the 30-day budget\nis exhausted in 5 days, and this alert is at or above that.\nCommon causes: a downstream that got slower without erroring, or a\nthreshold/bucket mismatch after an instrumentation change.\n",
+            "runbook_url": "https://github.com/TsMaster7/hlsa2-labs/blob/main/labs/2-2-red-use-sli-slo-alert-quality/runbooks/checkout-error-budget.md#ticket-sloslowburnlatency",
+            "slo_target": "99.9% of POST /checkout requests complete in < 300ms",
+            "summary": "Checkout latency SLO is burning slowly (ticket)"
+        },
+        "externalURL": "http://1f5ad2cc326f:9093",
+        "version": "4",
+        "groupKey": "{}/{severity=\"ticket\"}:{alertname=\"SLOSlowBurnLatency\", service=\"checkout\", slo=\"latency\"}",
+        "truncatedAlerts": 0
+    }
+}
+::ffff:172.17.0.1 - - [27/Jul/2026:10:18:58 +0000] "POST / HTTP/1.1" 200 6168 "-" "Alertmanager/0.27.0"
